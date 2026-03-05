@@ -1,0 +1,48 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Prose from '../../components/Prose.astro';
+import { SITE_TITLE } from '../../consts';
+
+type Props = CollectionEntry<'notes'>;
+
+export async function getStaticPaths() {
+	const notes = await getCollection('notes');
+	return notes.map((note) => ({
+		params: { slug: note.id },
+		props: note
+	}));
+}
+
+const note = Astro.props as Props;
+const { Content } = await render(note);
+const { title, description, pubDate, mood } = note.data;
+---
+
+<BaseLayout title={`${title} - ${SITE_TITLE}`} description={description}>
+	<div class='container max-w-3xl'>
+		<article>
+			<header class='mb-6 border-b border-zinc-200 dark:border-zinc-700 pb-4'>
+				<p class='text-sm text-zinc-500 dark:text-zinc-400 mb-2'>
+					<time>{pubDate.toLocaleDateString('zh-CN')}</time>
+					{mood && <span> · {mood}</span>}
+				</p>
+				<h1 class='text-3xl font-semibold leading-tight m-0'>{title}</h1>
+			</header>
+
+			<Prose>
+				<div class='note-detail'>
+					<Content />
+				</div>
+			</Prose>
+		</article>
+	</div>
+</BaseLayout>
+
+<style>
+	.note-detail :global(p) {
+		line-height: 1.95;
+		margin: 0 0 1.2rem;
+		text-indent: 2em;
+	}
+</style>

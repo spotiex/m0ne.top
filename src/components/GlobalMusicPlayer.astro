@@ -1,0 +1,526 @@
+---
+import type { NeteaseTrack } from '@src/lib/music/netease';
+
+interface Props {
+  tracks: NeteaseTrack[];
+}
+
+const { tracks = [] } = Astro.props as Props;
+const firstTrack = tracks[0];
+---
+
+<section
+	class='global-music-player fixed right-0 top-1/2 z-[995] w-[min(96vw,430px)] -translate-y-1/2 translate-x-[calc(100%-72px)] transition-transform duration-300 hover:translate-x-0'
+	data-global-music-panel
+	transition:persist
+>
+	<div class='flex items-stretch overflow-hidden rounded-l-2xl border border-r-0 border-zinc-200 bg-white/95 shadow-xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95'>
+		<button class='cd-wrap' type='button' data-cd-trigger aria-label='播放/暂停'>
+			<span class='cd-tag cd-tag-top' aria-hidden='true'>
+				<span>M</span><span>0</span><span>N</span><span>E</span>
+			</span>
+			<img src={firstTrack?.cover ?? ''} alt={firstTrack?.name ?? 'music'} class='cd-image' data-cd-image />
+			<span class='cd-tag cd-tag-bottom' aria-hidden='true'>
+				<span>M</span><span>U</span><span>S</span><span>I</span><span>C</span>
+			</span>
+		</button>
+
+		<div class='min-w-0 flex-1 p-3'>
+			<div class='music-top-row mb-2 grid grid-cols-[36px_1fr_auto] items-center gap-2 rounded-lg bg-zinc-100/70 p-2 dark:bg-zinc-800/70'>
+				<img
+					src={firstTrack?.cover ?? ''}
+					alt={firstTrack?.name ?? 'cover'}
+					class='h-9 w-9 rounded-md border border-zinc-200 object-cover dark:border-zinc-600'
+					data-mini-cover
+				/>
+				<div class='min-w-0'>
+					<p class='truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100' id='global-music-title'>
+						{firstTrack?.name ?? '--'}
+					</p>
+					<p class='truncate text-[11px] text-zinc-600 dark:text-zinc-300' id='global-music-artist'>
+						{firstTrack?.artist ?? '--'}
+					</p>
+				</div>
+				<div class='flex items-center gap-1'>
+					<button
+						type='button'
+						class='music-action-btn'
+						data-music-refresh
+						aria-label='刷新歌单'
+						title='刷新歌单'
+					>
+						<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'/><path d='M21 3v5h-5'/><path d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'/><path d='M8 16H3v5'/></svg>
+					</button>
+					<button
+						type='button'
+						class='music-action-btn'
+						data-music-random-play
+						aria-label='随机播放'
+						title='随机播放'
+					>
+						<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m18 14 4 4-4 4'/><path d='m18 2 4 4-4 4'/><path d='M2 18h2.5a6 6 0 0 0 4.8-2.4L21 4'/><path d='M2 6h2.5a6 6 0 0 1 4.8 2.4l1.5 2'/><path d='m9 16 1.5-2'/></svg>
+					</button>
+				</div>
+			</div>
+			<div class='music-audio-row audio-slot mb-2 rounded-lg bg-zinc-100/70 p-2 dark:bg-zinc-800/70'>
+				<audio
+					id='global-music-audio'
+					class='w-full'
+					controls
+					controlslist='nodownload noplaybackrate'
+					preload='none'
+					src={firstTrack?.playUrl}
+				></audio>
+			</div>
+			<div class='music-list-wrap' data-music-list-wrap>
+				{
+					tracks.length === 0 ? (
+						<p class='px-2 py-1 text-xs text-zinc-600 dark:text-zinc-300'>暂无可播放歌曲，请检查网易云配置。</p>
+					) : (
+						<ul class='max-h-[340px] space-y-1 overflow-y-auto overflow-x-hidden' data-music-list>
+							{
+								tracks.map((track, index) => (
+									<li>
+										<button
+											class='music-trigger grid w-full grid-cols-[34px_1fr_auto] items-center gap-2 rounded-lg p-1.5 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-800'
+											data-url={track.playUrl}
+											data-name={track.name}
+											data-artist={track.artist}
+											data-id={track.id}
+											data-index={index}
+											aria-label={`播放 ${track.name}`}
+										>
+											<img
+												src={track.cover}
+												alt={track.name}
+												class='h-8 w-8 rounded-md border border-zinc-200 object-cover dark:border-zinc-600'
+												loading='lazy'
+											/>
+											<span class='min-w-0'>
+												<strong class='block truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100'>{track.name}</strong>
+												<span class='block truncate text-[11px] text-zinc-600 dark:text-zinc-300'>{track.artist}</span>
+											</span>
+											<time class='text-[11px] tabular-nums text-zinc-500 dark:text-zinc-300'>{track.duration}</time>
+										</button>
+									</li>
+								))
+							}
+						</ul>
+					)
+				}
+			</div>
+		</div>
+	</div>
+</section>
+
+<script is:inline>
+	const STORAGE_KEY = 'global_music_player_state_v1';
+	const panel = document.querySelector('[data-global-music-panel]');
+	if (panel && !panel.dataset.bound) {
+		panel.dataset.bound = '1';
+		const audio = panel.querySelector('#global-music-audio');
+		const titleText = panel.querySelector('#global-music-title');
+		const artistText = panel.querySelector('#global-music-artist');
+		const refreshBtn = panel.querySelector('[data-music-refresh]');
+		const randomPlayBtn = panel.querySelector('[data-music-random-play]');
+		const cdTrigger = panel.querySelector('[data-cd-trigger]');
+		const cdImage = panel.querySelector('[data-cd-image]');
+		const miniCover = panel.querySelector('[data-mini-cover]');
+		const list = panel.querySelector('[data-music-list]');
+
+		let currentIndex = 0;
+		let lastSavedAt = 0;
+
+		const escapeHTML = (value) =>
+			String(value)
+				.replaceAll('&', '&amp;')
+				.replaceAll('<', '&lt;')
+				.replaceAll('>', '&gt;')
+				.replaceAll('"', '&quot;')
+				.replaceAll("'", '&#39;');
+
+		const setNowPlaying = (name, artist, cover) => {
+			if (titleText) titleText.textContent = name;
+			if (artistText) artistText.textContent = artist;
+			if (cover) {
+				if (cdImage) cdImage.setAttribute('src', cover);
+				if (miniCover) miniCover.setAttribute('src', cover);
+			}
+		};
+
+		const getCurrentTriggers = () => Array.from(panel.querySelectorAll('.music-trigger'));
+
+		const buildPlaylistSnapshot = () =>
+			getCurrentTriggers().map((trigger, index) => ({
+				id: Number(trigger.getAttribute('data-id') ?? '0'),
+				name: trigger.getAttribute('data-name') ?? '',
+				artist: trigger.getAttribute('data-artist') ?? '',
+				playUrl: trigger.getAttribute('data-url') ?? '',
+				duration:
+					trigger.querySelector('time')?.textContent?.trim() ?? '',
+				cover: trigger.querySelector('img')?.getAttribute('src') ?? '',
+				index,
+			}));
+
+		const saveState = () => {
+			if (!audio) return;
+			const triggers = getCurrentTriggers();
+			const current = triggers[currentIndex];
+			const payload = {
+				currentTrackId: Number(current?.getAttribute('data-id') ?? 0),
+				currentIndex,
+				currentTime: Number(audio.currentTime || 0),
+				isPlaying: !audio.paused,
+				playlist: buildPlaylistSnapshot(),
+				updatedAt: Date.now(),
+			};
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+		};
+
+		const trySaveState = () => {
+			const now = Date.now();
+			if (now - lastSavedAt < 800) return;
+			lastSavedAt = now;
+			saveState();
+		};
+
+		const playTrack = (button, index, autoPlay = true) => {
+			if (!audio || !button) return;
+			const url = button.getAttribute('data-url');
+			const name = button.getAttribute('data-name');
+			const artist = button.getAttribute('data-artist');
+			const cover = button.querySelector('img')?.getAttribute('src') ?? '';
+			if (!url) return;
+			if (audio.src !== url) audio.src = url;
+			currentIndex = Number.isFinite(index) ? index : 0;
+			if (name && artist) setNowPlaying(name, artist, cover);
+			if (autoPlay) audio.play().catch(() => {});
+			saveState();
+		};
+
+		const bindTriggers = () => {
+			const triggers = getCurrentTriggers();
+			triggers.forEach((trigger) => {
+				trigger.addEventListener('click', () => {
+					const index = Number(trigger.getAttribute('data-index') ?? '0');
+					playTrack(trigger, index, true);
+				});
+			});
+			return triggers;
+		};
+
+		let currentTriggers = bindTriggers();
+
+		const playTrackByIndex = (index, autoPlay = true) => {
+			if (currentTriggers.length === 0) return;
+			const safeIndex = ((index % currentTriggers.length) + currentTriggers.length) % currentTriggers.length;
+			const target = currentTriggers[safeIndex];
+			playTrack(target, safeIndex, autoPlay);
+		};
+
+		const restoreFromStorage = () => {
+			const raw = localStorage.getItem(STORAGE_KEY);
+			if (!raw) return;
+			try {
+				const state = JSON.parse(raw);
+				const storedPlaylist = Array.isArray(state?.playlist) ? state.playlist : [];
+				if (storedPlaylist.length > 0 && list) {
+					list.innerHTML = storedPlaylist
+						.map(
+							(track, index) => `
+								<li>
+									<button
+										class="music-trigger grid w-full grid-cols-[38px_1fr_auto] items-center gap-2 rounded-lg p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+										data-url="${escapeHTML(track.playUrl ?? '')}"
+										data-name="${escapeHTML(track.name ?? '')}"
+										data-artist="${escapeHTML(track.artist ?? '')}"
+										data-id="${escapeHTML(track.id ?? 0)}"
+										data-index="${index}"
+									>
+										<img src="${escapeHTML(track.cover ?? '')}" alt="${escapeHTML(track.name ?? '')}" class="h-9 w-9 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
+										<span class="min-w-0">
+											<strong class="block truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">${escapeHTML(track.name ?? '')}</strong>
+											<span class="block truncate text-[11px] text-zinc-600 dark:text-zinc-300">${escapeHTML(track.artist ?? '')}</span>
+										</span>
+										<time class="text-[11px] tabular-nums text-zinc-500 dark:text-zinc-300">${escapeHTML(track.duration ?? '')}</time>
+									</button>
+								</li>`,
+						)
+						.join('');
+					currentTriggers = bindTriggers();
+				}
+				const restoredIndex = Number(state?.currentIndex ?? 0);
+				playTrackByIndex(restoredIndex, false);
+
+				if (audio) {
+					const targetTime = Number(state?.currentTime ?? 0);
+					if (targetTime > 0) {
+						audio.addEventListener(
+							'loadedmetadata',
+							() => {
+								audio.currentTime = targetTime;
+							},
+							{ once: true },
+						);
+					}
+					if (state?.isPlaying) {
+						audio.play().catch(() => {});
+					}
+				}
+			} catch {
+				// ignore bad cache
+			}
+		};
+
+		restoreFromStorage();
+
+		randomPlayBtn?.addEventListener('click', () => {
+			if (currentTriggers.length === 0) return;
+			const pickIndex = Math.floor(Math.random() * currentTriggers.length);
+			playTrackByIndex(pickIndex, true);
+		});
+
+		cdTrigger?.addEventListener('click', () => {
+			if (!audio) return;
+			if (audio.paused) {
+				audio.play().catch(() => {});
+			} else {
+				audio.pause();
+			}
+		});
+
+		audio?.addEventListener('ended', () => {
+			if (currentTriggers.length === 0) return;
+			const nextIndex = (currentIndex + 1) % currentTriggers.length;
+			playTrackByIndex(nextIndex, true);
+		});
+		audio?.addEventListener('timeupdate', trySaveState);
+		audio?.addEventListener('play', () => {
+			cdImage?.classList.add('is-spinning');
+			saveState();
+		});
+		audio?.addEventListener('pause', () => {
+			cdImage?.classList.remove('is-spinning');
+			saveState();
+		});
+
+		refreshBtn?.addEventListener('click', async () => {
+			const wasPlaying = !!audio && !audio.paused;
+			refreshBtn.setAttribute('disabled', 'true');
+			refreshBtn.classList.add('is-loading');
+			try {
+				const res = await fetch('/api/music/random.json', { cache: 'no-store' });
+				if (!res.ok) throw new Error('failed');
+				const data = await res.json();
+				const tracks = Array.isArray(data?.tracks) ? data.tracks : [];
+				if (list) {
+					list.innerHTML = tracks
+						.map(
+							(track, index) => `
+							<li>
+								<button
+									class="music-trigger grid w-full grid-cols-[38px_1fr_auto] items-center gap-2 rounded-lg p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+									data-url="${escapeHTML(track.playUrl ?? '')}"
+									data-name="${escapeHTML(track.name ?? '')}"
+									data-artist="${escapeHTML(track.artist ?? '')}"
+									data-id="${escapeHTML(track.id ?? 0)}"
+									data-index="${index}"
+								>
+									<img src="${escapeHTML(track.cover ?? '')}" alt="${escapeHTML(track.name ?? '')}" class="h-9 w-9 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
+									<span class="min-w-0">
+										<strong class="block truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">${escapeHTML(track.name ?? '')}</strong>
+										<span class="block truncate text-[11px] text-zinc-600 dark:text-zinc-300">${escapeHTML(track.artist ?? '')}</span>
+									</span>
+									<time class="text-[11px] tabular-nums text-zinc-500 dark:text-zinc-300">${escapeHTML(track.duration ?? '')}</time>
+								</button>
+							</li>`,
+						)
+						.join('');
+				}
+				currentTriggers = bindTriggers();
+				currentIndex = 0;
+				if (tracks[0]) {
+					playTrackByIndex(0, wasPlaying);
+				} else if (audio) {
+					audio.pause();
+					audio.removeAttribute('src');
+					audio.load();
+					if (titleText) titleText.textContent = '--';
+					if (artistText) artistText.textContent = '--';
+					saveState();
+				}
+			} catch (error) {
+				console.error('[music] refresh failed', error);
+			} finally {
+				refreshBtn.removeAttribute('disabled');
+				refreshBtn.classList.remove('is-loading');
+			}
+		});
+	}
+</script>
+
+<style is:global>
+	[data-global-music-panel] audio {
+		accent-color: #52525b;
+	}
+
+	[data-global-music-panel] .cd-wrap {
+		width: 72px;
+		min-width: 72px;
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		padding: 10px 0;
+		background: linear-gradient(180deg, rgb(250 250 250), rgb(244 244 245));
+		border-right: 1px solid rgb(228 228 231);
+	}
+
+	[data-global-music-panel] .cd-tag {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: space-evenly;
+		min-width: 32px;
+		min-height: 122px;
+		padding: 6px 4px;
+		gap: 0;
+		border-radius: 999px;
+		border: 1px solid rgb(212 212 216);
+		background: rgb(250 250 250);
+		line-height: 1.1;
+		font-size: 9px;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		color: rgb(82 82 91);
+		white-space: nowrap;
+		user-select: none;
+	}
+
+	[data-global-music-panel] .cd-tag-top {
+		position: static;
+	}
+
+	[data-global-music-panel] .cd-tag-bottom {
+		position: static;
+	}
+
+	[data-global-music-panel] .cd-image {
+		width: 50px;
+		height: 50px;
+		object-fit: cover;
+		border-radius: 9999px;
+		border: 3px solid rgb(24 24 27);
+		box-shadow: inset 0 0 0 7px rgb(255 255 255 / 0.2);
+	}
+
+	[data-global-music-panel] .cd-image.is-spinning {
+		animation: cd-spin 3.6s linear infinite;
+	}
+
+	[data-global-music-panel] .music-top-row,
+	[data-global-music-panel] .music-audio-row {
+		overflow: hidden;
+		min-height: 40px;
+		width: min(100%, 342px);
+		margin-inline: auto;
+	}
+
+	[data-global-music-panel] .music-action-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 26px;
+		height: 26px;
+		border-radius: 9999px;
+		border: 1px solid rgb(212 212 216);
+		background: rgb(250 250 250);
+		color: rgb(82 82 91);
+		transition: all 0.15s ease;
+	}
+
+	[data-global-music-panel] .music-action-btn:hover {
+		background: rgb(244 244 245);
+		color: rgb(24 24 27);
+	}
+
+	[data-global-music-panel] .music-action-btn.is-loading {
+		opacity: 0.55;
+	}
+
+	[data-global-music-panel] .audio-slot {
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
+		padding-inline: 6px;
+	}
+
+	[data-global-music-panel] .audio-slot audio {
+		width: 100%;
+		height: 34px;
+	}
+
+	/* 拉开原生控制区中时间/进度/音量的可用间距。 */
+	[data-global-music-panel] audio::-webkit-media-controls-panel {
+		padding-inline: 8px;
+	}
+
+	[data-global-music-panel] audio::-webkit-media-controls-current-time-display,
+	[data-global-music-panel] audio::-webkit-media-controls-time-remaining-display {
+		margin-inline: 2px;
+	}
+
+	[data-global-music-panel] audio::-webkit-media-controls-timeline {
+		margin-inline: 4px;
+	}
+
+	@keyframes cd-spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.dark [data-global-music-panel] audio {
+		color-scheme: dark;
+		accent-color: #a1a1aa;
+		background-color: #18181b;
+		border-radius: 9999px;
+	}
+
+	.dark [data-global-music-panel] audio::-webkit-media-controls-enclosure {
+		background-color: #18181b;
+		border-radius: 9999px;
+	}
+
+	.dark [data-global-music-panel] audio::-webkit-media-controls-panel {
+		background-color: #18181b;
+		padding-inline: 8px;
+	}
+
+	.dark [data-global-music-panel] .cd-wrap {
+		background: linear-gradient(180deg, rgb(39 39 42), rgb(24 24 27));
+		border-right-color: rgb(63 63 70);
+	}
+
+	.dark [data-global-music-panel] .cd-tag {
+		border-color: rgb(82 82 91);
+		background: rgb(39 39 42);
+		color: rgb(228 228 231);
+	}
+
+	.dark [data-global-music-panel] .music-action-btn {
+		border-color: rgb(82 82 91);
+		background: rgb(39 39 42);
+		color: rgb(212 212 216);
+	}
+
+	.dark [data-global-music-panel] .music-action-btn:hover {
+		background: rgb(63 63 70);
+		color: rgb(250 250 250);
+	}
+</style>

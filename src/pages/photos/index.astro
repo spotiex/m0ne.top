@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { HOME_GALLERY_ITEMS, SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+---
+
+<BaseLayout title={`Photos - ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
+	<div class='container'>
+		<div class='mb-8'>
+			<h1 class='text-3xl md:text-4xl font-bold mb-2'>Photos</h1>
+			<p class='text-zinc-700 dark:text-zinc-300'>
+				这里展示的是画廊总览，图片地址可在 <code>src/consts.ts</code> 中统一维护。
+			</p>
+		</div>
+
+		<div class='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+			{
+				HOME_GALLERY_ITEMS.map((item) => (
+					<figure class='rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900'>
+						<img src={item.src} alt={item.alt} loading='lazy' class='w-full aspect-[4/3] object-cover' />
+						{item.title && <figcaption class='px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300'>{item.title}</figcaption>}
+					</figure>
+				))
+			}
+		</div>
+	</div>
+</BaseLayout>

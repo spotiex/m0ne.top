@@ -1,0 +1,96 @@
+---
+import type { GalleryItem } from '../consts';
+
+interface Props {
+	photos: GalleryItem[];
+}
+
+const { photos = [] } = Astro.props;
+const loopPhotos = photos.length > 0 ? [...photos, ...photos] : [];
+---
+
+<section class='not-prose'>
+	<div class='flex justify-between gap-2 border-b mb-3 dark:border-b-zinc-700'>
+		<h2 class='text-lg font-bold mb-3'>Photo Gallery</h2>
+		<a href='/photos/' class='inline-block py-2 underline dark:prose-invert'>All photos &raquo;</a>
+	</div>
+
+	{
+		photos.length === 0 ? (
+			<p class='text-sm text-zinc-600 dark:text-zinc-400'>
+				暂未配置图片。请在 <code>src/consts.ts</code> 的 <code>HOME_GALLERY_ITEMS</code> 填入图床链接。
+			</p>
+		) : (
+			<div class='gallery-marquee'>
+				<div class='gallery-track'>
+					{
+						loopPhotos.map((item) => (
+							<article class='gallery-card'>
+								<img src={item.src} alt={item.alt} loading='lazy' />
+								{item.title && <p>{item.title}</p>}
+							</article>
+						))
+					}
+				</div>
+			</div>
+		)
+	}
+</section>
+
+<style>
+	.gallery-marquee {
+		overflow: hidden;
+		mask-image: linear-gradient(to right, transparent 0, black 5%, black 95%, transparent 100%);
+	}
+
+	.gallery-track {
+		display: flex;
+		gap: 0.9rem;
+		width: max-content;
+		animation: gallery-scroll 32s linear infinite;
+	}
+
+	.gallery-marquee:hover .gallery-track {
+		animation-play-state: paused;
+	}
+
+	.gallery-card {
+		width: clamp(180px, 22vw, 280px);
+		border-radius: 0.9rem;
+		overflow: hidden;
+		background: rgb(250 250 250);
+		border: 1px solid rgb(228 228 231);
+	}
+
+	.gallery-card img {
+		display: block;
+		width: 100%;
+		aspect-ratio: 4 / 3;
+		object-fit: cover;
+	}
+
+	.gallery-card p {
+		margin: 0;
+		padding: 0.52rem 0.7rem;
+		font-size: 0.83rem;
+		color: rgb(82 82 91);
+	}
+
+	:global(html.dark) .gallery-card {
+		background: rgb(24 24 27);
+		border-color: rgb(63 63 70);
+	}
+
+	:global(html.dark) .gallery-card p {
+		color: rgb(212 212 216);
+	}
+
+	@keyframes gallery-scroll {
+		from {
+			transform: translateX(0);
+		}
+		to {
+			transform: translateX(-50%);
+		}
+	}
+</style>

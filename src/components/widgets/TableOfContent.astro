@@ -1,0 +1,138 @@
+---
+const { headings, maxLevel = 3 } = Astro.props;
+const toc = buildToc(headings);
+function buildToc(headings: any) {
+	const _toc: any = [];
+	const parentHeadings = new Map();
+	(headings || []).forEach((h: any) => {
+		const heading = { ...h, subheadings: [] };
+		parentHeadings.set(heading.depth, heading);
+		// Change 2 to 1 if your markdown includes your <h1>
+		if (heading.depth === 2) {
+			_toc.push(heading);
+		} else {
+			if (maxLevel > 2) {
+				parentHeadings.get(heading.depth - 1)?.subheadings?.push(heading);
+			}
+		}
+	});
+	return _toc;
+}
+---
+
+<nav class='toc py-2'>
+	<h3 class='toc-title'>On This Page</h3>
+	<div class='toc-divider' aria-hidden='true'></div>
+	<ul class='toc-list max-h-[calc(100vh-70px)] overflow-auto text-[.825rem]'>
+		{
+			toc.map((heading: any) => (
+				<li>
+					<a
+						class='toc-link'
+						data-toc-link
+						href={'#' + heading.slug}>
+						{heading.text}
+					</a>
+					{heading.subheadings?.length > 0 && (
+						<ul>
+							{heading.subheadings.map((subheading: any) => (
+								<li>
+									<a
+										class='toc-link toc-link-sub'
+										data-toc-link
+										href={'#' + subheading.slug}>
+										{subheading.text}
+									</a>
+								</li>
+							))}
+						</ul>
+					)}
+				</li>
+			))
+		}
+	</ul>
+</nav>
+<style>
+	.toc-title {
+		margin: 0 0 0.35rem;
+		padding: 0 0.75rem;
+		font-size: 0.77rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		font-weight: 700;
+		color: rgb(161 161 170);
+	}
+
+	.toc-divider {
+		height: 1px;
+		background: rgb(228 228 231);
+		margin: 0 0.75rem 0.45rem;
+	}
+
+	.toc-link {
+		display: block;
+		padding: 0.36rem 0.75rem;
+		border-left: 2px solid transparent;
+		line-height: 1.35;
+		color: rgb(113 113 122);
+		text-decoration: none;
+		transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+	}
+
+	.toc-link-sub {
+		padding-left: 1.2rem;
+		font-size: 0.8rem;
+	}
+
+	.toc-link:hover {
+		color: rgb(39 39 42);
+	}
+
+	.toc-link.is-active {
+		color: rgb(24 24 27);
+		background: rgb(244 244 245 / 0.8);
+		border-left-color: rgb(24 24 27);
+		font-weight: 600;
+	}
+
+	.toc-list::-webkit-scrollbar {
+		width: 5px;
+	}
+
+	/* Track */
+	.toc-list::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.toc-list::-webkit-scrollbar-thumb {
+		background: #eeeeee;
+		border-radius: 5px;
+	}
+
+	:global(.dark) .toc-title {
+		color: rgb(113 113 122);
+	}
+
+	:global(.dark) .toc-divider {
+		background: rgb(63 63 70);
+	}
+
+	:global(.dark) .toc-link {
+		color: rgb(161 161 170);
+	}
+
+	:global(.dark) .toc-link:hover {
+		color: rgb(228 228 231);
+	}
+
+	:global(.dark) .toc-link.is-active {
+		color: rgb(250 250 250);
+		background: rgb(39 39 42 / 0.85);
+		border-left-color: rgb(244 244 245);
+	}
+
+	:global(.dark) .toc-list::-webkit-scrollbar-thumb {
+		background: #2e2e2e;
+		border-radius: 5px;
+	}
+</style>
