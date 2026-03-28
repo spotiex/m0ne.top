@@ -65,7 +65,26 @@ All commands are run from the root of the project, from a terminal:
 | `pnpm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `pnpm run astro -- --help` | Get help using the Astro CLI                     |
 
+## 📝 Visual Editing + R2 Uploads (Netlify)
+
+This project includes Decap CMS at `/admin` and an R2 upload API at `/api/admin/r2-upload`.
+
+1. Keep Netlify Identity + Git Gateway enabled for CMS auth/editor access.
+2. Add these Netlify environment variables:
+
+| Variable | Example | Notes |
+| :-- | :-- | :-- |
+| `R2_ACCOUNT_ID` | `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` | Cloudflare account id |
+| `R2_ACCESS_KEY_ID` | `...` | R2 API token access key |
+| `R2_SECRET_ACCESS_KEY` | `...` | R2 API token secret |
+| `R2_BUCKET` | `blog-images` | Target bucket |
+| `R2_PUBLIC_BASE_URL` | `https://img.example.com` | Public bucket/CDN domain (no trailing slash) |
+| `R2_REGION` | `auto` | Optional, defaults to `auto` |
+| `R2_MAX_UPLOAD_SIZE_MB` | `15` | Optional, defaults to `15` |
+| `R2_UPLOAD_BYPASS_AUTH` | `1` | Optional for local/dev only; skip Netlify Identity token verification |
+
+`coverImage` in post frontmatter now supports both local Astro-managed images and external URLs (e.g. R2 CDN links).
+
 ## 👀 Want to learn more?
 
 Check out [Astro documentation](https://docs.astro.build).
-

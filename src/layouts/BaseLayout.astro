@@ -28,6 +28,17 @@ const globalMusicTracks = isHome ? [] : await getNeteaseTopTracks({ random: true
 		</div>
 		<Footer />
 		{!isHome && <GlobalMusicPlayer tracks={globalMusicTracks} transition:persist />}
+		<script is:inline>
+			if (window.netlifyIdentity) {
+				window.netlifyIdentity.on('init', (user) => {
+					if (!user) {
+						window.netlifyIdentity.on('login', () => {
+							document.location.href = '/admin/';
+						});
+					}
+				});
+			}
+		</script>
 		<!-- Google tag (gtag.js) -->
     {
       GTAG_MEASUREMENT_ID &&

@@ -15,7 +15,8 @@ export const getStaticPaths = async () => {
 				.flat()
 				.filter((tag) => !!tag)
 		)
-	].map((tag) => ({ params: { tag: slugify(tag || '') } }));
+	].map((tag) => ({ params: { tag: slugify(tag || '') } }))
+	 .filter((entry) => !!entry.params.tag);
 };
 
 const { tag } = Astro.params;

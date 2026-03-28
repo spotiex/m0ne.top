@@ -42,3 +42,6 @@ const { title, description, image = '/syakir.webp' } = Astro.props;
 <meta property='twitter:title' content={title} />
 <meta property='twitter:description' content={description} />
 <meta property='twitter:image' content={new URL(image, Astro.url)} />
+
+<!-- Netlify Identity Widget -->
+<script is:inline src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
