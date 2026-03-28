@@ -17,6 +17,9 @@
       if (window.CMS && window.registerR2MediaLibrary) {
         window.registerR2MediaLibrary(window.CMS);
       }
+      if (window.CMS && typeof window.CMS.registerPreviewStyle === 'function') {
+        window.CMS.registerPreviewStyle('/admin/preview.css');
+      }
       if (window.CMS && typeof window.CMS.init === 'function') {
         window.CMS.init();
       }

@@ -4,6 +4,8 @@ backend:
 
 locale: 'zh_Hans'
 local_backend: true
+editor:
+  preview: true
 
 media_folder: "public/uploads"
 public_folder: "/uploads"
@@ -38,7 +40,11 @@ collections:
       - { label: "更新日期", name: "updatedDate", widget: "datetime", required: false }
       - { label: "标签", name: "tags", widget: "list", required: false }
       - { label: "封面图", name: "coverImage", widget: "image", required: false }
-      - { label: "正文", name: "body", widget: "markdown" }
+      -
+        label: "正文"
+        name: "body"
+        widget: "markdown"
+        modes: ["rich_text", "raw"]
 
   - name: "notes"
     label: "随笔"
@@ -59,4 +65,8 @@ collections:
       - { label: "描述", name: "description", widget: "text" }
       - { label: "发布日期", name: "pubDate", widget: "datetime" }
       - { label: "心情", name: "mood", widget: "string", required: false }
-      - { label: "正文", name: "body", widget: "markdown" }
+      -
+        label: "正文"
+        name: "body"
+        widget: "markdown"
+        modes: ["rich_text", "raw"]
