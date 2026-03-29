@@ -7,8 +7,8 @@ local_backend: true
 editor:
   preview: true
 
-media_folder: "public/uploads"
-public_folder: "/uploads"
+media_folder: ""
+public_folder: ""
 media_library:
   name: "r2"
   config:
