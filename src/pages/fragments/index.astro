@@ -3,14 +3,14 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
-type NotePost = CollectionEntry<'notes'>;
-const notes = (await getCollection('notes')).sort((a: NotePost, b: NotePost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+type FragmentPost = CollectionEntry<'fragments'>;
+const fragments = (await getCollection('fragments')).sort((a: FragmentPost, b: FragmentPost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 
-<BaseLayout title={`Notes - ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
+<BaseLayout title={`Fragments - ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
 	<div class='container'>
 		<div class='mb-8'>
-			<h1 class='text-3xl font-semibold mb-2'>随笔 / Notes</h1>
+				<h1 class='text-3xl font-semibold mb-2'>随笔 / Fragments</h1>
 			<p class='text-zinc-700 dark:text-zinc-300'>
 				这里收录比文章更短、更即时的想法碎片。
 			</p>
@@ -18,10 +18,10 @@ const notes = (await getCollection('notes')).sort((a: NotePost, b: NotePost) => 
 
 		<div class='space-y-4'>
 			{
-				notes.map((note) => (
+					fragments.map((note) => (
 					<article class='rounded-xl border border-zinc-200 dark:border-zinc-700 px-5 py-4 bg-white dark:bg-zinc-900'>
 						<h2 class='m-0 text-lg font-semibold leading-relaxed'>
-							<a class='no-underline text-zinc-900 dark:text-zinc-100' href={`/notes/${note.id}/`}>
+								<a class='no-underline text-zinc-900 dark:text-zinc-100' href={`/fragments/${note.id}/`}>
 								{note.data.title}
 							</a>
 						</h2>

@@ -15,8 +15,8 @@ const blog = defineCollection({
 	})
 });
 
-const notes = defineCollection({
-	loader: glob({ pattern: "**/*.md", base: "./src/content/notes" }),
+const fragments = defineCollection({
+	loader: glob({ pattern: "**/*.md", base: "./src/content/fragments" }),
 	schema: z.object({
 		title: z.string(),
 		description: z.string(),
@@ -25,4 +25,4 @@ const notes = defineCollection({
 	})
 });
 
-export const collections = { blog, notes };
+export const collections = { blog, fragments };

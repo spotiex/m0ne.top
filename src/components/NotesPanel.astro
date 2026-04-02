@@ -2,7 +2,7 @@
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
-	notes: CollectionEntry<'notes'>[];
+	notes: CollectionEntry<'fragments'>[];
 }
 
 const { notes = [] } = Astro.props;
@@ -11,19 +11,19 @@ const { notes = [] } = Astro.props;
 <section class='not-prose'>
 	<div class='flex justify-between gap-2 border-b mb-3 dark:border-b-zinc-700'>
 		<h2 class='text-lg font-bold mb-3'>随笔 / Fragments</h2>
-		<a href='/notes/' class='inline-block py-2 underline dark:prose-invert'>All notes &raquo;</a>
+		<a href='/fragments/' class='inline-block py-2 underline dark:prose-invert'>All fragments &raquo;</a>
 	</div>
 
 	{
 		notes.length === 0 ? (
 			<p class='text-sm text-zinc-600 dark:text-zinc-400'>
-				暂未配置随笔数据。请在 <code>src/content/notes</code> 添加 Markdown 文件。
+					暂未配置随笔数据。请在 <code>src/content/fragments</code> 添加 Markdown 文件。
 			</p>
 		) : (
 			<div class='notes-grid'>
 				{
-					notes.slice(0, 6).map((note, index) => (
-						<a class={`note-card note-tone-${index % 3}`} href={`/notes/${note.id}/`}>
+						notes.slice(0, 6).map((note, index) => (
+							<a class={`note-card note-tone-${index % 3}`} href={`/fragments/${note.id}/`}>
 							<h3 class='note-title'>{note.data.title}</h3>
 							<p class='note-content'>{note.data.description}</p>
 							<div class='note-meta'>

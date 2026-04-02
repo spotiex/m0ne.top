@@ -14,31 +14,42 @@ import NotesPanel from '../components/NotesPanel.astro';
 import { getNeteaseTopTracks } from '@src/lib/music/netease';
 
 type BlogPost = CollectionEntry<'blog'>;
-type NotePost = CollectionEntry<'notes'>;
+type FragmentPost = CollectionEntry<'fragments'>;
 
 const top6Projects = projects.slice(0, 6);
 const posts = (await getCollection('blog')).sort((a: BlogPost, b: BlogPost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()).slice(0, 5);
-const notes = (await getCollection('notes')).sort((a: NotePost, b: NotePost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const fragments = (await getCollection('fragments')).sort((a: FragmentPost, b: FragmentPost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 const musicTracks = await getNeteaseTopTracks({ random: true });
+const heroLines = ['工科硕士在读', '时而热情，时而懒惰', '折腾技术小玩意儿', '新鲜事物爱好者', '不怕矛盾冲突的problem solver!', '立了很多flag但实现了几个的普通人'];
 ---
 
 <BaseLayout title={SITE_TITLE + ' - ' + SITE_TAGLINE} description={SITE_DESCRIPTION}>
 	<div class='container'>
-		<div class='w-full mb-12'>
-      <div class="text-pretty leading-9">
-        <h1 class="text-4xl font-bold mb-4">Hi There 👋, Syakir Here! </h1>
-        <Prose>
-          <div class="text-lg">
-            <p>I am a Front-end Engineer from Indonesia. I love sharing what i know on <a href="https://devaradise.com" target="_blank">devaradise.com</a>, and sometime i also share freebies like this. I'm also active on <a href="https://dev.to/syakirurahman" target="_blank">dev.to</a> and <a href="https://x.com/syakirurahman" target="_blank">twitter</a>.</p>
-            <p>I made Devolio to help you easily set up your own blog and portfolio website. It's a static site built with Astro and Tailwind CSS, and you can deploy it on platforms like <a href="https://app.netlify.com/start/deploy?repository=https://github.com/devaradise/devolio" target="_blank" rel="nofollow noopener">Netlify</a>, <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdevaradise%2Fdevolio" target="_blank" rel="nofollow noopener">Vercel</a>, or <a href="https://pages.cloudflare.com/" target="_blank" rel="nofollow noopener">Cloudflare Pages</a>.</p>  
-          </div>
-        </Prose>
-      </div>
-		</div>
+			<div class='w-full mb-12'>
+	      <div class="text-pretty leading-9">
+	        <h1 class="text-4xl font-bold mb-3">
+						<span class="hero-wave" aria-hidden="true">👋</span>
+						我是m0ne，欢迎来到小天地！
+					</h1>
+					<p class="text-xl text-zinc-700 dark:text-zinc-300 m-0 min-h-[2rem]">
+						<span id="hero-typing" data-lines={JSON.stringify(heroLines)}>{heroLines[0]}</span><span class="hero-caret" aria-hidden="true">|</span>
+					</p>
+					<Prose>
+						<div class="text-base mt-4 text-zinc-600 dark:text-zinc-400">
+							<p>我会在 <a href="https://m0ne.top" target="_blank">m0ne.top</a> 上记录大的小的，有的没的，创作内容包括长文生活感悟，计算机前沿技术学习，生活随拍随写不等，同样欢迎你加入掌握自我生活的队伍，一起来写点什么吧！</p>
+							<p>这是一个以 <a href="https://devaradise.com/">devaradise</a> 为模板修改的博客主页。前端技术栈为 Astro 和 Tailwind CSS，代码通过 <a href="https://app.netlify.com/start/deploy?repository=https://github.com/devaradise/devolio" target="_blank" rel="nofollow noopener">Netlify</a> 与 <a href="https://github.com" target="_blank" rel="nofollow noopener">GitHub</a> 托管与部署。</p>
+              <p>
+                  若使用 <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdevaradise%2Fdevolio" target="_blank" rel="nofollow noopener">Vercel</a>, <a href="https://pages.cloudflare.com/" target="_blank" rel="nofollow noopener">Cloudflare Pages</a>，请点击获取相关文档链接和部署教程。
+              </p>
+          
+						</div>
+					</Prose>
+	      </div>
+				</div>
 		<main>
       <div class='mt-6 mb-12'>
         <div class="flex justify-between gap-2 border-b mb-1 dark:border-b-zinc-700">
-          <h2 class="text-lg font-bold mb-3">Recent Posts</h2>
+          <h2 class="text-lg font-bold mb-3">长一点的文段 / Posts</h2>
           <a href="/posts/" class="inline-block py-2 underline dark:prose-invert">All posts &raquo;</a>
         </div>
         <div>
@@ -52,21 +63,141 @@ const musicTracks = await getNeteaseTopTracks({ random: true });
         </div>
       </div>
       <div class="mb-12">
-        <NotesPanel notes={notes} />
+        <NotesPanel notes={fragments} />
       </div>
       <div class="mb-12">
         <PhotoGalleryStrip photos={HOME_GALLERY_ITEMS} />
       </div>
       <div>
         <div class="flex justify-between gap-2 mb-1">
-          <h2 class="text-lg font-bold mb-3">My Projects</h2>
+          <h2 class="text-lg font-bold mb-3">研究过的技术玩意儿</h2>
           <a href="/projects/" class="inline-block py-2 underline dark:prose-invert">All projects &raquo;</a>
         </div>
         <ProjectList projects={top6Projects}/>
       </div>
-      <div class="mt-12">
-        <MusicPanel tracks={musicTracks} />
-      </div>
-		</main>
-	</div>
+	      <div class="mt-12">
+	        <MusicPanel tracks={musicTracks} />
+	      </div>
+			</main>
+
+				<script is:inline>
+					const initHeroTyping = () => {
+						const target = document.getElementById('hero-typing');
+						if (!target) return;
+						if (target.dataset.typingActive === '1') return;
+						const rawLines = target.getAttribute('data-lines');
+						if (!rawLines) return;
+
+					let lines;
+					try {
+						lines = JSON.parse(rawLines);
+					} catch {
+						lines = [];
+						}
+						if (!Array.isArray(lines) || lines.length === 0) return;
+						target.dataset.typingActive = '1';
+
+					let timerId = 0;
+					let lineIndex = 0;
+					let charIndex = 0;
+					let isDeleting = false;
+
+					const typeSpeed = 95;
+					const deleteSpeed = 55;
+					const holdAfterType = 1200;
+					const holdAfterDelete = 260;
+
+					const tick = () => {
+						if (!document.contains(target)) return;
+						const currentLine = lines[lineIndex];
+
+						if (!isDeleting) {
+							charIndex += 1;
+							target.textContent = currentLine.slice(0, charIndex);
+							if (charIndex >= currentLine.length) {
+								isDeleting = true;
+								timerId = window.setTimeout(tick, holdAfterType);
+								return;
+							}
+							timerId = window.setTimeout(tick, typeSpeed);
+							return;
+						}
+
+						charIndex -= 1;
+						target.textContent = currentLine.slice(0, Math.max(charIndex, 0));
+						if (charIndex <= 0) {
+							isDeleting = false;
+							lineIndex = (lineIndex + 1) % lines.length;
+							timerId = window.setTimeout(tick, holdAfterDelete);
+							return;
+						}
+						timerId = window.setTimeout(tick, deleteSpeed);
+					};
+
+					target.textContent = '';
+					window.setTimeout(tick, 360);
+
+						document.addEventListener(
+							'astro:before-swap',
+							() => {
+								window.clearTimeout(timerId);
+								target.dataset.typingActive = '0';
+							},
+							{ once: true }
+						);
+					};
+
+					if (document.readyState === 'loading') {
+						document.addEventListener('DOMContentLoaded', initHeroTyping, { once: true });
+					} else {
+						initHeroTyping();
+					}
+					document.addEventListener('astro:page-load', initHeroTyping);
+				</script>
+
+			<style>
+				.hero-wave {
+					display: inline-block;
+					transform-origin: 70% 75%;
+					animation: hero-wave 1.9s ease-in-out infinite;
+					margin-right: 0.35rem;
+				}
+
+				.hero-caret {
+					opacity: 1;
+					animation: hero-caret 1s step-end infinite;
+					margin-left: 0.15rem;
+				}
+
+				@keyframes hero-wave {
+					0%,
+					100% {
+						transform: rotate(0deg);
+					}
+					12% {
+						transform: rotate(16deg);
+					}
+					24% {
+						transform: rotate(-7deg);
+					}
+					36% {
+						transform: rotate(12deg);
+					}
+					48% {
+						transform: rotate(-4deg);
+					}
+				}
+
+				@keyframes hero-caret {
+					0%,
+					49% {
+						opacity: 1;
+					}
+					50%,
+					100% {
+						opacity: 0;
+					}
+				}
+			</style>
+		</div>
 </BaseLayout>
