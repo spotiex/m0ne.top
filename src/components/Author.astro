@@ -1,6 +1,6 @@
 ---
 import { Image } from 'astro:assets';
-import Ava from '@src/assets/img/ava.jpg';
+import ME from '@src/assets/img/me.jpg';
 
 type PicSize = 'sm' | 'md' | 'lg';
 interface Props {
@@ -21,7 +21,7 @@ const { picSize } = Astro.props;
 			{ 'w-[90px] h-[90px]': picSize === 'lg' }
 		]}
 	>
-		<Image src={Ava} alt='Muhammad Syakirurohman' />
+		<Image src={ME} alt='m0ne' />
 	</a>
 	<div>
 		<div>
@@ -31,7 +31,7 @@ const { picSize } = Astro.props;
 				target='_blank'
 				rel='noopener noreferrer'
 			>
-				Muhammad Syakirurohman
+				m0ne
 			</a>
 		</div>
 		<small class='avatar__subtitle'>Frontend Engineer</small>

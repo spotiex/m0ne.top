@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "racknerd-bf-watch",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-08",
+  "workers_dev": true,
+  "triggers": {
+    "crons": ["*/30 * * * *"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "STATE_KV",
+      "id": "REPLACE_WITH_PRODUCTION_KV_ID",
+      "preview_id": "REPLACE_WITH_PREVIEW_KV_ID"
+    }
+  ],
+  "send_email": [
+    {
+      "name": "NOTIFIER",
+      "destination_address": "REPLACE_WITH_RECIPIENT@example.com"
+    }
+  ],
+  "vars": {
+    "SEED_URLS": "[\"https://my.racknerd.com/index.php?rp=/store/blackfriday2025\",\"https://www.racknerd.com/BlackFriday/\"]",
+    "WATCH_LOCATIONS": "[\"LA-DC-02\",\"Los Angeles (DC-02)\",\"San Jose\",\"Seattle\"]",
+    "FROM_EMAIL": "racknerd-watch@example.com",
+    "TO_EMAIL": "REPLACE_WITH_RECIPIENT@example.com",
+    "USER_AGENT": "racknerd-bf-watch/1.0 (+https://workers.dev)"
+  }
+}
