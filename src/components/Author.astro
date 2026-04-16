@@ -21,7 +21,8 @@ const { picSize } = Astro.props;
 			{ 'w-[90px] h-[90px]': picSize === 'lg' }
 		]}
 	>
-		<Image src={ME} alt='m0ne' />
+		<Image src={ME} alt='m0ne' class='block h-full w-full object-cover' />
+		<!-- Revert option: <Image src={ME} alt='m0ne' /> -->
 	</a>
 	<div>
 		<div>
@@ -34,6 +35,6 @@ const { picSize } = Astro.props;
 				m0ne
 			</a>
 		</div>
-		<small class='avatar__subtitle'>Frontend Engineer</small>
+		<small class='avatar__subtitle'>硕士研究生在读</small>
 	</div>
 </div>

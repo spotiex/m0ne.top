@@ -1,0 +1,31 @@
+# Fragment Template
+
+这是一份碎片化短内容模板，不会被 Astro 渲染。
+
+使用方式：
+1. 复制内容到 `src/content/fragments/YYYY-MM-DD-your-fragment/index.md`
+2. 替换标题、摘要、日期和正文
+
+推荐目录示例：
+`src/content/fragments/2026-04-16-night-note/index.md`
+
+---
+title: '这里写碎片标题'
+description: '一句话摘要，简短即可'
+pubDate: '2026-04-16'
+mood: 'calm'
+---
+
+今天记录一个短瞬间。
+
+可以是一段见闻，一点情绪，一次对话，或者一个忽然冒出来的念头。
+
+如果这则 fragment 足够完整，也可以自然分成两三小段，但通常不必太长。
+
+## 发布前检查
+
+- 标题是否简洁
+- 日期是否正确
+- mood 是否需要填写
+- 内容是否适合以碎片形式发布
+
