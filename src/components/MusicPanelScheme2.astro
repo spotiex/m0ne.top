@@ -1,0 +1,266 @@
+---
+import type { NeteaseTrack } from '@src/lib/music/netease';
+
+interface Props {
+  tracks: NeteaseTrack[];
+}
+
+const { tracks } = Astro.props as Props;
+const firstTrack = tracks[0];
+---
+
+<section class="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100" data-music-panel-scheme2>
+  <div class="mb-4 flex items-center justify-between gap-3">
+    <h2 class="text-lg font-bold text-zinc-900 dark:text-zinc-100">喜欢的歌 / Music</h2>
+    <div class="flex items-center gap-2">
+      <button type="button" class="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-700" data-music-refresh>刷新</button>
+      <button type="button" class="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-700" data-music-random-play>随机播放</button>
+    </div>
+  </div>
+
+  {
+    tracks.length === 0 ? (
+      <p class="text-sm text-zinc-600 dark:text-zinc-300">音乐列表暂不可用。</p>
+    ) : (
+      <>
+        <ul class="space-y-3" data-music-list>
+          {
+            tracks.map((track, index) => (
+              <li>
+                <button
+                  class="music-trigger grid w-full grid-cols-[52px_1fr_auto] items-center gap-3 rounded-xl p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  data-url={track.playUrl}
+                  data-name={track.name}
+                  data-artist={track.artist}
+                  data-id={track.id}
+                  data-index={index}
+                  aria-label={`播放 ${track.name}`}
+                >
+                  <img src={track.cover} alt={track.name} class="h-12 w-12 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
+                  <span class="min-w-0">
+                    <strong class="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">{track.name}</strong>
+                    <span class="block truncate text-xs text-zinc-600 dark:text-zinc-300">{track.artist}</span>
+                  </span>
+                  <time class="text-xs tabular-nums text-zinc-500 dark:text-zinc-300">{track.duration}</time>
+                </button>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="mt-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-600 dark:bg-zinc-900">
+          <p id="music-now-playing-scheme2" class="mb-2 text-center text-sm text-zinc-700 dark:text-zinc-200">
+            Playing: {firstTrack ? `${firstTrack.name} - ${firstTrack.artist}` : '--'}
+          </p>
+          <audio id="music-audio-scheme2" class="w-full" controls preload="none" src={firstTrack?.playUrl}></audio>
+        </div>
+      </>
+    )
+  }
+</section>
+
+<script is:inline>
+  const STORAGE_KEY = 'global_music_player_state_v1';
+  const panel = document.querySelector('[data-music-panel-scheme2]');
+  if (panel && !panel.dataset.bound) {
+    panel.dataset.bound = '1';
+    const audio = panel.querySelector('#music-audio-scheme2');
+    const nowPlaying = panel.querySelector('#music-now-playing-scheme2');
+    const refreshBtn = panel.querySelector('[data-music-refresh]');
+    const randomBtn = panel.querySelector('[data-music-random-play]');
+    const list = panel.querySelector('[data-music-list]');
+    let currentIndex = 0;
+    let lastSavedAt = 0;
+
+    const setNowPlaying = (name, artist) => {
+      if (nowPlaying) nowPlaying.textContent = `Playing: ${name} - ${artist}`;
+    };
+
+    const escapeHTML = (value) =>
+      String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+
+    const getTriggers = () => Array.from(panel.querySelectorAll('.music-trigger'));
+
+    const buildPlaylistSnapshot = () =>
+      getTriggers().map((trigger, index) => ({
+        id: Number(trigger.getAttribute('data-id') ?? '0'),
+        name: trigger.getAttribute('data-name') ?? '',
+        artist: trigger.getAttribute('data-artist') ?? '',
+        playUrl: trigger.getAttribute('data-url') ?? '',
+        duration: trigger.querySelector('time')?.textContent?.trim() ?? '',
+        cover: trigger.querySelector('img')?.getAttribute('src') ?? '',
+        index,
+      }));
+
+    const saveState = () => {
+      if (!audio) return;
+      const triggers = getTriggers();
+      const current = triggers[currentIndex];
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          currentTrackId: Number(current?.getAttribute('data-id') ?? 0),
+          currentIndex,
+          currentTime: Number(audio.currentTime || 0),
+          isPlaying: !audio.paused,
+          playlist: buildPlaylistSnapshot(),
+          updatedAt: Date.now(),
+        })
+      );
+    };
+
+    const trySaveState = () => {
+      const now = Date.now();
+      if (now - lastSavedAt < 800) return;
+      lastSavedAt = now;
+      saveState();
+    };
+
+    const playTrack = (button, index, autoPlay = true) => {
+      if (!audio || !button) return;
+      const url = button.getAttribute('data-url');
+      if (!url) return;
+      if (audio.src !== url) audio.src = url;
+      currentIndex = Number.isFinite(index) ? index : 0;
+      setNowPlaying(button.getAttribute('data-name') ?? '--', button.getAttribute('data-artist') ?? '--');
+      if (autoPlay) audio.play().catch(() => {});
+      saveState();
+    };
+
+    const bindTriggers = () => {
+      const triggers = getTriggers();
+      triggers.forEach((trigger) => {
+        trigger.addEventListener('click', () => {
+          const index = Number(trigger.getAttribute('data-index') ?? '0');
+          playTrack(trigger, index, true);
+        });
+      });
+      return triggers;
+    };
+
+    let currentTriggers = bindTriggers();
+
+    const playTrackByIndex = (index, autoPlay = true) => {
+      if (currentTriggers.length === 0) return;
+      const safeIndex = ((index % currentTriggers.length) + currentTriggers.length) % currentTriggers.length;
+      playTrack(currentTriggers[safeIndex], safeIndex, autoPlay);
+    };
+
+    const restoreFromStorage = () => {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const state = JSON.parse(raw);
+        const storedPlaylist = Array.isArray(state?.playlist) ? state.playlist : [];
+        if (storedPlaylist.length > 0 && list) {
+          list.innerHTML = storedPlaylist
+            .map(
+              (track, index) => `
+                <li>
+                  <button
+                    class="music-trigger grid w-full grid-cols-[52px_1fr_auto] items-center gap-3 rounded-xl p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    data-url="${escapeHTML(track.playUrl ?? '')}"
+                    data-name="${escapeHTML(track.name ?? '')}"
+                    data-artist="${escapeHTML(track.artist ?? '')}"
+                    data-id="${escapeHTML(track.id ?? 0)}"
+                    data-index="${index}"
+                    aria-label="播放 ${escapeHTML(track.name ?? '')}"
+                  >
+                    <img src="${escapeHTML(track.cover ?? '')}" alt="${escapeHTML(track.name ?? '')}" class="h-12 w-12 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
+                    <span class="min-w-0">
+                      <strong class="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">${escapeHTML(track.name ?? '')}</strong>
+                      <span class="block truncate text-xs text-zinc-600 dark:text-zinc-300">${escapeHTML(track.artist ?? '')}</span>
+                    </span>
+                    <time class="text-xs tabular-nums text-zinc-500 dark:text-zinc-300">${escapeHTML(track.duration ?? '')}</time>
+                  </button>
+                </li>`
+            )
+            .join('');
+          currentTriggers = bindTriggers();
+        }
+        playTrackByIndex(Number(state?.currentIndex ?? 0), false);
+        if (audio) {
+          const targetTime = Number(state?.currentTime ?? 0);
+          if (targetTime > 0) {
+            audio.addEventListener(
+              'loadedmetadata',
+              () => {
+                audio.currentTime = targetTime;
+              },
+              { once: true }
+            );
+          }
+          if (state?.isPlaying) {
+            audio.play().catch(() => {});
+          }
+        }
+      } catch {
+      }
+    };
+
+    restoreFromStorage();
+
+    randomBtn?.addEventListener('click', () => {
+      if (currentTriggers.length === 0) return;
+      const pickIndex = Math.floor(Math.random() * currentTriggers.length);
+      playTrackByIndex(pickIndex, true);
+    });
+
+    refreshBtn?.addEventListener('click', async () => {
+      if (!list) return;
+      const wasPlaying = !!audio && !audio.paused;
+      refreshBtn.setAttribute('disabled', 'true');
+      refreshBtn.textContent = '刷新中...';
+      try {
+        const res = await fetch('/api/music/random.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error('failed');
+        const data = await res.json();
+        const tracks = Array.isArray(data?.tracks) ? data.tracks : [];
+        list.innerHTML = tracks
+          .map(
+            (track, index) => `
+              <li>
+                <button
+                  class="music-trigger grid w-full grid-cols-[52px_1fr_auto] items-center gap-3 rounded-xl p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  data-url="${escapeHTML(track.playUrl ?? '')}"
+                  data-name="${escapeHTML(track.name ?? '')}"
+                  data-artist="${escapeHTML(track.artist ?? '')}"
+                  data-id="${escapeHTML(track.id ?? 0)}"
+                  data-index="${index}"
+                  aria-label="播放 ${escapeHTML(track.name ?? '')}"
+                >
+                  <img src="${escapeHTML(track.cover ?? '')}" alt="${escapeHTML(track.name ?? '')}" class="h-12 w-12 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
+                  <span class="min-w-0">
+                    <strong class="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">${escapeHTML(track.name ?? '')}</strong>
+                    <span class="block truncate text-xs text-zinc-600 dark:text-zinc-300">${escapeHTML(track.artist ?? '')}</span>
+                  </span>
+                  <time class="text-xs tabular-nums text-zinc-500 dark:text-zinc-300">${escapeHTML(track.duration ?? '')}</time>
+                </button>
+              </li>`
+          )
+          .join('');
+        currentTriggers = bindTriggers();
+        currentIndex = 0;
+        if (tracks[0]) {
+          playTrackByIndex(0, wasPlaying);
+        }
+      } finally {
+        refreshBtn.removeAttribute('disabled');
+        refreshBtn.textContent = '刷新';
+      }
+    });
+
+    audio?.addEventListener('ended', () => {
+      if (currentTriggers.length === 0) return;
+      playTrackByIndex(currentIndex + 1, true);
+    });
+    audio?.addEventListener('timeupdate', trySaveState);
+    audio?.addEventListener('play', saveState);
+    audio?.addEventListener('pause', saveState);
+  }
+</script>

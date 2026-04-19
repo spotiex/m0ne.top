@@ -52,6 +52,11 @@ const formatDuration = (ms: number): string => {
   return `${String(min).padStart(2, '0')}:${String(remain).padStart(2, '0')}`;
 };
 
+const toHttpsUrl = (value: string | undefined): string => {
+  if (!value) return '';
+  return value.replace(/^http:\/\//i, 'https://');
+};
+
 const buildNeteaseCookie = (): string => {
   // 优先使用完整 Cookie 配置。
   const rawCookie = import.meta.env.NETEASE_COOKIE?.trim();
@@ -207,8 +212,8 @@ export const getNeteaseTopTracks = async (options: GetTrackOptions = {}): Promis
         name: track.name,
         artist: (track.ar ?? []).map((a) => a.name).filter(Boolean).join(' / ') || 'Unknown Artist',
         duration: formatDuration(track.dt),
-        cover: track.al?.picUrl ?? '',
-        playUrl: urlMap.get(track.id) ?? '',
+        cover: toHttpsUrl(track.al?.picUrl ?? ''),
+        playUrl: toHttpsUrl(urlMap.get(track.id) ?? ''),
       }))
       .filter((track) => track.playUrl);
     // VIP/版权受限歌曲通常无播放地址。

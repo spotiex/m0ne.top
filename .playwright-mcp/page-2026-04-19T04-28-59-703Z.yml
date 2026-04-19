@@ -1,0 +1,287 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - navigation [ref=e4]:
+        - heading "Your site name" [level=2] [ref=e5]:
+          - link "Your site name" [ref=e6] [cursor=pointer]:
+            - /url: /
+            - img "Your site name" [ref=e7]
+        - generic [ref=e8]:
+          - link "Github logo" [ref=e9] [cursor=pointer]:
+            - /url: https://github.com/devaradise/devolio
+            - img "Github logo" [ref=e10]
+          - button "Theme mode" [ref=e11] [cursor=pointer]:
+            - img [ref=e12]
+      - generic [ref=e15]:
+        - link "Home" [ref=e17] [cursor=pointer]:
+          - /url: /
+          - img [ref=e18]
+        - link "关于我" [ref=e22] [cursor=pointer]:
+          - /url: /about/
+        - link "文章" [ref=e24] [cursor=pointer]:
+          - /url: /posts/
+        - link "随笔" [ref=e26] [cursor=pointer]:
+          - /url: /fragments/
+        - link "捣鼓玩意" [ref=e28] [cursor=pointer]:
+          - /url: /projects/
+        - link "随手拍" [ref=e30] [cursor=pointer]:
+          - /url: /photos/
+        - link "标签" [ref=e32] [cursor=pointer]:
+          - /url: /tags/
+  - generic [ref=e34]:
+    - generic [ref=e36]:
+      - heading "我是m0ne，欢迎来到小天地！" [level=1] [ref=e37]:
+        - generic [ref=e38]: 👋
+        - text: 我是m0ne，欢迎来到小天地！
+      - paragraph [ref=e39]: "|"
+      - generic [ref=e41]:
+        - paragraph [ref=e42]:
+          - text: 我会在
+          - link "m0ne.top" [ref=e43] [cursor=pointer]:
+            - /url: https://m0ne.top
+          - text: 上记录大的小的，有的没的，创作内容包括长文生活感悟，计算机前沿技术学习，生活随拍随写不等，同样欢迎你加入掌握自我生活的队伍，一起来写点什么吧！
+        - paragraph [ref=e44]:
+          - text: 这是一个以
+          - link "devaradise" [ref=e45] [cursor=pointer]:
+            - /url: https://devaradise.com/
+          - text: 为模板修改的博客主页。前端技术栈为 Astro 和 Tailwind CSS，代码通过
+          - link "Netlify" [ref=e46] [cursor=pointer]:
+            - /url: https://app.netlify.com/start/deploy?repository=https://github.com/devaradise/devolio
+          - text: 与
+          - link "GitHub" [ref=e47] [cursor=pointer]:
+            - /url: https://github.com
+          - text: 托管与部署。
+        - paragraph [ref=e48]:
+          - text: 若使用
+          - link "Vercel" [ref=e49] [cursor=pointer]:
+            - /url: https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdevaradise%2Fdevolio
+          - text: ","
+          - link "Cloudflare Pages" [ref=e50] [cursor=pointer]:
+            - /url: https://pages.cloudflare.com/
+          - text: ，请点击获取相关文档链接和部署教程。
+    - main [ref=e51]:
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - heading "长一点的文段 / Posts" [level=2] [ref=e54]
+          - link "All posts »" [ref=e55] [cursor=pointer]:
+            - /url: /posts/
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - time [ref=e59]: Apr 13, 2026
+            - heading "我的俗气" [level=3] [ref=e60]:
+              - link "我的俗气" [ref=e61] [cursor=pointer]:
+                - /url: /2026-4-13-post/
+            - generic [ref=e62]:
+              - link "旅游感悟" [ref=e63] [cursor=pointer]:
+                - /url: /tags/
+              - link "博客" [ref=e64] [cursor=pointer]:
+                - /url: /tags/
+          - generic [ref=e65]:
+            - time [ref=e67]: Apr 02, 2026
+            - heading "三月小记" [level=3] [ref=e68]:
+              - link "三月小记" [ref=e69] [cursor=pointer]:
+                - /url: /2026-04-02-post/
+            - generic [ref=e70]:
+              - link "月记" [ref=e71] [cursor=pointer]:
+                - /url: /tags/
+              - link "生活" [ref=e72] [cursor=pointer]:
+                - /url: /tags/
+              - link "博客" [ref=e73] [cursor=pointer]:
+                - /url: /tags/
+          - generic [ref=e74]:
+            - time [ref=e76]: Mar 03, 2026
+            - heading "中文字体预览：Posts 模块测试页" [level=3] [ref=e77]:
+              - link "中文字体预览：Posts 模块测试页" [ref=e78] [cursor=pointer]:
+                - /url: /chinese-font-preview/
+            - generic [ref=e79]:
+              - link "中文字体" [ref=e80] [cursor=pointer]:
+                - /url: /tags/
+              - link "排版测试" [ref=e81] [cursor=pointer]:
+                - /url: /tags/
+              - link "Posts" [ref=e82] [cursor=pointer]:
+                - /url: /tags/posts
+          - generic [ref=e83]:
+            - time [ref=e85]: Mar 03, 2026
+            - heading "长文测试：侧边目录跟随滚动与阅读定位" [level=3] [ref=e86]:
+              - link "长文测试：侧边目录跟随滚动与阅读定位" [ref=e87] [cursor=pointer]:
+                - /url: /long-toc-test/
+            - generic [ref=e88]:
+              - link "目录测试" [ref=e89] [cursor=pointer]:
+                - /url: /tags/
+              - link "长文" [ref=e90] [cursor=pointer]:
+                - /url: /tags/
+              - link "排版" [ref=e91] [cursor=pointer]:
+                - /url: /tags/
+          - generic [ref=e92]:
+            - time [ref=e94]: Aug 18, 2024
+            - heading "Markdown Style Guide" [level=3] [ref=e95]:
+              - link "Markdown Style Guide" [ref=e96] [cursor=pointer]:
+                - /url: /markdown-style-guide/
+            - generic [ref=e97]:
+              - link "Markdown" [ref=e98] [cursor=pointer]:
+                - /url: /tags/markdown
+              - link "Guide" [ref=e99] [cursor=pointer]:
+                - /url: /tags/guide
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - heading "随笔 / Fragments" [level=2] [ref=e103]
+          - link "All fragments »" [ref=e104] [cursor=pointer]:
+            - /url: /fragments/
+        - generic [ref=e105]:
+          - link "夜路与便利店灯光 散步路过便利店时，暖白色灯光把一天的疲惫切开了一道口子。 2026/3/28 松弛" [ref=e106] [cursor=pointer]:
+            - /url: /fragments/fragments-2026-3-28/
+            - heading "夜路与便利店灯光" [level=3] [ref=e107]
+            - paragraph [ref=e108]: 散步路过便利店时，暖白色灯光把一天的疲惫切开了一道口子。
+            - generic [ref=e109]:
+              - time [ref=e110]: 2026/3/28
+              - generic [ref=e111]: 松弛
+          - link "雨后街角的一张照片 加一张图测试随笔页面在图文混排时的渲染、间距与主题表现。 2026/3/4 安静" [ref=e112] [cursor=pointer]:
+            - /url: /fragments/2026-03-04-note-with-photo/
+            - heading "雨后街角的一张照片" [level=3] [ref=e113]
+            - paragraph [ref=e114]: 加一张图测试随笔页面在图文混排时的渲染、间距与主题表现。
+            - generic [ref=e115]:
+              - time [ref=e116]: 2026/3/4
+              - generic [ref=e117]: 安静
+          - link "雨天车窗外 地铁窗外的一场小雨，让我想起很多年前那个还不急着赶路的自己。 2026/3/3 平静" [ref=e118] [cursor=pointer]:
+            - /url: /fragments/2026-03-03-rainy-window/
+            - heading "雨天车窗外" [level=3] [ref=e119]
+            - paragraph [ref=e120]: 地铁窗外的一场小雨，让我想起很多年前那个还不急着赶路的自己。
+            - generic [ref=e121]:
+              - time [ref=e122]: 2026/3/3
+              - generic [ref=e123]: 平静
+          - link "站台上的三分钟 等车的短短几分钟，反而比一整天更像真正属于自己的时间。 2026/3/2 清醒" [ref=e124] [cursor=pointer]:
+            - /url: /fragments/2026-03-02-subway-thought/
+            - heading "站台上的三分钟" [level=3] [ref=e125]
+            - paragraph [ref=e126]: 等车的短短几分钟，反而比一整天更像真正属于自己的时间。
+            - generic [ref=e127]:
+              - time [ref=e128]: 2026/3/2
+              - generic [ref=e129]: 清醒
+      - generic [ref=e131]:
+        - generic [ref=e132]:
+          - heading "光学视界 / Gallery" [level=2] [ref=e133]
+          - link "All photos »" [ref=e134] [cursor=pointer]:
+            - /url: /photos/
+        - generic [ref=e135]:
+          - generic [ref=e137]:
+            - article [ref=e138]:
+              - img "Yanqi Lake" [ref=e139]
+              - paragraph [ref=e140]: 雁栖湖景
+            - article [ref=e141]:
+              - img "陶然角" [ref=e142]
+              - paragraph [ref=e143]: 陶然角
+            - article [ref=e144]:
+              - img "北海北" [ref=e145]
+              - paragraph [ref=e146]: 北海北
+            - article [ref=e147]:
+              - img "砖瓦间穿梭" [ref=e148]
+              - paragraph [ref=e149]: 砖瓦穿梭
+            - article [ref=e150]:
+              - img "Churchill" [ref=e151]
+              - paragraph [ref=e152]: Churchill
+            - article [ref=e153]:
+              - img "Yanqi Lake" [ref=e154]
+              - paragraph [ref=e155]: 雁栖湖景
+            - article [ref=e156]:
+              - img "陶然角" [ref=e157]
+              - paragraph [ref=e158]: 陶然角
+            - article [ref=e159]:
+              - img "北海北" [ref=e160]
+              - paragraph [ref=e161]: 北海北
+            - article [ref=e162]:
+              - img "砖瓦间穿梭" [ref=e163]
+              - paragraph [ref=e164]: 砖瓦穿梭
+            - article [ref=e165]:
+              - img "Churchill" [ref=e166]
+              - paragraph [ref=e167]: Churchill
+          - generic [ref=e169]:
+            - article [ref=e170]:
+              - img "m0ne 在奈良" [ref=e171]
+              - paragraph [ref=e172]: 奈良之行
+            - article [ref=e173]
+            - article [ref=e174]:
+              - img "雪天穿行" [ref=e175]
+              - paragraph [ref=e176]: 雪天穿行
+            - article [ref=e177]
+            - article [ref=e178]:
+              - img "m0ne 在奈良" [ref=e179]
+              - paragraph [ref=e180]: 奈良之行
+            - article [ref=e181]
+            - article [ref=e182]:
+              - img "雪天穿行" [ref=e183]
+              - paragraph [ref=e184]: 雪天穿行
+            - article [ref=e185]
+      - generic [ref=e187]:
+        - heading "研究过的玩意儿 / Projects" [level=2] [ref=e188]
+        - link "All projects »" [ref=e189] [cursor=pointer]:
+          - /url: /projects/
+      - generic [ref=e191]:
+        - generic [ref=e192]:
+          - heading "喜欢的歌 / Music" [level=2] [ref=e193]
+          - generic [ref=e194]:
+            - button "刷新" [ref=e195] [cursor=pointer]
+            - button "随机播放" [ref=e196] [cursor=pointer]
+        - list [ref=e197]:
+          - listitem [ref=e198]:
+            - button "播放 Morning Sun" [ref=e199] [cursor=pointer]:
+              - img "Morning Sun" [ref=e200]
+              - generic [ref=e201]:
+                - strong [ref=e202]: Morning Sun
+                - generic [ref=e203]: Robin Thicke
+              - time [ref=e204]: 03:30
+          - listitem [ref=e205]:
+            - button "播放 神探" [pressed] [ref=e206] [cursor=pointer]:
+              - img "神探" [ref=e207]
+              - generic [ref=e208]:
+                - strong [ref=e209]: 神探
+                - generic [ref=e210]: 丁世光
+              - time [ref=e211]: 04:35
+          - listitem [ref=e212]:
+            - button "播放 冬天" [ref=e213] [cursor=pointer]:
+              - img "冬天" [ref=e214]
+              - generic [ref=e215]:
+                - strong [ref=e216]: 冬天
+                - generic [ref=e217]: 古巨基
+              - time [ref=e218]: 04:35
+          - listitem [ref=e219]:
+            - button "播放 Fashion" [ref=e220] [cursor=pointer]:
+              - img "Fashion" [ref=e221]
+              - generic [ref=e222]:
+                - strong [ref=e223]: Fashion
+                - generic [ref=e224]: The Royal Concept
+              - time [ref=e225]: 03:33
+          - listitem [ref=e226]:
+            - button "播放 我想" [ref=e227] [cursor=pointer]:
+              - img "我想" [ref=e228]
+              - generic [ref=e229]:
+                - strong [ref=e230]: 我想
+                - generic [ref=e231]: 孙燕姿
+              - time [ref=e232]: 04:30
+        - generic [ref=e233]:
+          - paragraph [ref=e234]: "Playing: 神探 - 丁世光"
+          - generic [ref=e235]:
+            - button "播放或暂停" [ref=e236] [cursor=pointer]: 播放
+            - paragraph [ref=e237]: 00:00 / 00:00
+  - contentinfo [ref=e238]:
+    - link "请我喝杯绿茶🍵" [ref=e240] [cursor=pointer]:
+      - /url: "#"
+    - generic [ref=e242]:
+      - generic [ref=e243]: m0ne 的小天地 © 2026
+      - generic [ref=e244]:
+        - text: 模板来源
+        - link "Syakir @ Devaradise" [ref=e245] [cursor=pointer]:
+          - /url: https://devaradise.com
+  - generic [ref=e248]:
+    - button "Menu" [ref=e249]:
+      - img [ref=e251]
+      - generic: Menu
+    - button "Inspect" [ref=e255]:
+      - img [ref=e257]
+      - generic: Inspect
+    - button "Audit" [ref=e259]:
+      - generic [ref=e260]:
+        - img [ref=e261]
+        - img [ref=e264]
+      - generic: Audit
+    - button "Settings" [ref=e267]:
+      - img [ref=e269]
+      - generic: Settings

@@ -19,11 +19,11 @@ type FragmentPost = CollectionEntry<'fragments'>;
 const top6Projects = projects.slice(0, 6);
 const posts = (await getCollection('blog')).sort((a: BlogPost, b: BlogPost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()).slice(0, 5);
 const fragments = (await getCollection('fragments')).sort((a: FragmentPost, b: FragmentPost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-const musicTracks = await getNeteaseTopTracks({ random: true });
+const musicTracks = await getNeteaseTopTracks();
 const heroLines = ['工科硕士在读', '时而热情，时而懒惰', '折腾技术小玩意儿', '新鲜事物爱好者', '不怕矛盾冲突的problem solver!', '立了很多flag但实现了几个的普通人'];
 ---
 
-<BaseLayout title={SITE_TITLE + ' - ' + SITE_TAGLINE} description={SITE_DESCRIPTION}>
+<BaseLayout title={SITE_TITLE + ' - ' + SITE_TAGLINE} description={SITE_DESCRIPTION} globalMusicTracks={musicTracks}>
 	<div class='container'>
 			<div class='w-full mb-12'>
 	      <div class="text-pretty leading-9">

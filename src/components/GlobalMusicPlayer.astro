@@ -67,7 +67,6 @@ const firstTrack = tracks[0];
 					id='global-music-audio'
 					class='w-full'
 					controls
-					controlslist='nodownload noplaybackrate'
 					preload='none'
 					src={firstTrack?.playUrl}
 				></audio>
@@ -115,9 +114,20 @@ const firstTrack = tracks[0];
 
 <script is:inline>
 	const STORAGE_KEY = 'global_music_player_state_v1';
+	const MAX_RESTORABLE_STATE_AGE_MS = 1000 * 60 * 30;
 	const panel = document.querySelector('[data-global-music-panel]');
 	if (panel && !panel.dataset.bound) {
 		panel.dataset.bound = '1';
+		const syncVisibility = () => {
+			const isHome = window.location.pathname === '/';
+			panel.toggleAttribute('hidden', isHome);
+			panel.setAttribute('aria-hidden', isHome ? 'true' : 'false');
+			panel.style.display = isHome ? 'none' : '';
+		};
+
+		syncVisibility();
+		document.addEventListener('astro:page-load', syncVisibility);
+
 		const audio = panel.querySelector('#global-music-audio');
 		const titleText = panel.querySelector('#global-music-title');
 		const artistText = panel.querySelector('#global-music-artist');
@@ -130,6 +140,10 @@ const firstTrack = tracks[0];
 
 		let currentIndex = 0;
 		let lastSavedAt = 0;
+		const emitStateChange = () => {
+			const detail = getState();
+			window.dispatchEvent(new CustomEvent('global-music-player:state', { detail }));
+		};
 
 		const escapeHTML = (value) =>
 			String(value)
@@ -162,19 +176,45 @@ const firstTrack = tracks[0];
 				index,
 			}));
 
-		const saveState = () => {
-			if (!audio) return;
+		const getState = () => {
+			if (!audio) {
+				return {
+					currentTrackId: 0,
+					currentIndex: 0,
+					currentTime: 0,
+					isPlaying: false,
+					isMuted: false,
+					volume: 1,
+					playlist: buildPlaylistSnapshot(),
+					duration: 0,
+					updatedAt: Date.now(),
+				};
+			}
 			const triggers = getCurrentTriggers();
 			const current = triggers[currentIndex];
-			const payload = {
+			return {
 				currentTrackId: Number(current?.getAttribute('data-id') ?? 0),
 				currentIndex,
 				currentTime: Number(audio.currentTime || 0),
 				isPlaying: !audio.paused,
+				isMuted: audio.muted,
+				volume: Number(audio.volume || 0),
 				playlist: buildPlaylistSnapshot(),
+				duration: Number.isFinite(audio.duration) ? Number(audio.duration) : 0,
+				nowPlaying: {
+					name: titleText?.textContent ?? '',
+					artist: artistText?.textContent ?? '',
+					cover: cdImage?.getAttribute('src') ?? '',
+				},
 				updatedAt: Date.now(),
 			};
+		};
+
+		const saveState = () => {
+			if (!audio) return;
+			const payload = getState();
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+			emitStateChange();
 		};
 
 		const trySaveState = () => {
@@ -218,11 +258,22 @@ const firstTrack = tracks[0];
 			playTrack(target, safeIndex, autoPlay);
 		};
 
+		const playRandomTrack = () => {
+			if (currentTriggers.length === 0) return;
+			const pickIndex = Math.floor(Math.random() * currentTriggers.length);
+			playTrackByIndex(pickIndex, true);
+		};
+
 		const restoreFromStorage = () => {
 			const raw = localStorage.getItem(STORAGE_KEY);
 			if (!raw) return;
 			try {
 				const state = JSON.parse(raw);
+				const isFresh = Date.now() - Number(state?.updatedAt ?? 0) <= MAX_RESTORABLE_STATE_AGE_MS;
+				if (!isFresh) {
+					localStorage.removeItem(STORAGE_KEY);
+					return;
+				}
 				const storedPlaylist = Array.isArray(state?.playlist) ? state.playlist : [];
 				if (storedPlaylist.length > 0 && list) {
 					list.innerHTML = storedPlaylist
@@ -254,6 +305,9 @@ const firstTrack = tracks[0];
 
 				if (audio) {
 					const targetTime = Number(state?.currentTime ?? 0);
+					const storedVolume = Number(state?.volume ?? 1);
+					audio.volume = Math.min(1, Math.max(0, Number.isFinite(storedVolume) ? storedVolume : 1));
+					audio.muted = Boolean(state?.isMuted);
 					if (targetTime > 0) {
 						audio.addEventListener(
 							'loadedmetadata',
@@ -267,6 +321,7 @@ const firstTrack = tracks[0];
 						audio.play().catch(() => {});
 					}
 				}
+				emitStateChange();
 			} catch {
 				// ignore bad cache
 			}
@@ -274,40 +329,10 @@ const firstTrack = tracks[0];
 
 		restoreFromStorage();
 
-		randomPlayBtn?.addEventListener('click', () => {
-			if (currentTriggers.length === 0) return;
-			const pickIndex = Math.floor(Math.random() * currentTriggers.length);
-			playTrackByIndex(pickIndex, true);
-		});
-
-		cdTrigger?.addEventListener('click', () => {
-			if (!audio) return;
-			if (audio.paused) {
-				audio.play().catch(() => {});
-			} else {
-				audio.pause();
-			}
-		});
-
-		audio?.addEventListener('ended', () => {
-			if (currentTriggers.length === 0) return;
-			const nextIndex = (currentIndex + 1) % currentTriggers.length;
-			playTrackByIndex(nextIndex, true);
-		});
-		audio?.addEventListener('timeupdate', trySaveState);
-		audio?.addEventListener('play', () => {
-			cdImage?.classList.add('is-spinning');
-			saveState();
-		});
-		audio?.addEventListener('pause', () => {
-			cdImage?.classList.remove('is-spinning');
-			saveState();
-		});
-
-		refreshBtn?.addEventListener('click', async () => {
+		const refreshPlaylist = async () => {
 			const wasPlaying = !!audio && !audio.paused;
-			refreshBtn.setAttribute('disabled', 'true');
-			refreshBtn.classList.add('is-loading');
+			refreshBtn?.setAttribute('disabled', 'true');
+			refreshBtn?.classList.add('is-loading');
 			try {
 				const res = await fetch('/api/music/random.json', { cache: 'no-store' });
 				if (!res.ok) throw new Error('failed');
@@ -349,13 +374,75 @@ const firstTrack = tracks[0];
 					if (artistText) artistText.textContent = '--';
 					saveState();
 				}
+				emitStateChange();
+				return getState();
 			} catch (error) {
 				console.error('[music] refresh failed', error);
+				throw error;
 			} finally {
-				refreshBtn.removeAttribute('disabled');
-				refreshBtn.classList.remove('is-loading');
+				refreshBtn?.removeAttribute('disabled');
+				refreshBtn?.classList.remove('is-loading');
 			}
+		};
+
+		window.__GLOBAL_MUSIC_PLAYER__ = {
+			getState,
+			playTrackByIndex,
+			playRandomTrack,
+			refreshPlaylist,
+			seekTo: (time) => {
+				if (!audio) return;
+				audio.currentTime = Math.max(0, Number(time) || 0);
+				saveState();
+			},
+			setVolume: (volume) => {
+				if (!audio) return;
+				const nextVolume = Math.min(1, Math.max(0, Number(volume) || 0));
+				audio.volume = nextVolume;
+				if (nextVolume > 0 && audio.muted) {
+					audio.muted = false;
+				}
+				saveState();
+			},
+			toggleMute: () => {
+				if (!audio) return;
+				audio.muted = !audio.muted;
+				saveState();
+			},
+			togglePlayPause: () => {
+				if (!audio) return;
+				if (audio.paused) {
+					audio.play().catch(() => {});
+				} else {
+					audio.pause();
+				}
+			},
+		};
+		window.dispatchEvent(new Event('global-music-player:ready'));
+
+		randomPlayBtn?.addEventListener('click', playRandomTrack);
+
+		cdTrigger?.addEventListener('click', () => window.__GLOBAL_MUSIC_PLAYER__?.togglePlayPause?.());
+
+		audio?.addEventListener('ended', () => {
+			if (currentTriggers.length === 0) return;
+			const nextIndex = (currentIndex + 1) % currentTriggers.length;
+			playTrackByIndex(nextIndex, true);
 		});
+		audio?.addEventListener('timeupdate', trySaveState);
+		audio?.addEventListener('loadedmetadata', saveState);
+		audio?.addEventListener('volumechange', saveState);
+		audio?.addEventListener('play', () => {
+			cdImage?.classList.add('is-spinning');
+			saveState();
+		});
+		audio?.addEventListener('pause', () => {
+			cdImage?.classList.remove('is-spinning');
+			saveState();
+		});
+
+		refreshBtn?.addEventListener('click', refreshPlaylist);
+
 	}
 </script>
 
@@ -522,5 +609,13 @@ const firstTrack = tracks[0];
 	.dark [data-global-music-panel] .music-action-btn:hover {
 		background: rgb(63 63 70);
 		color: rgb(250 250 250);
+	}
+
+	:global(body[data-home='true'] .global-music-player) {
+		display: none;
+		opacity: 0;
+		pointer-events: none;
+		transform: translateY(-50%) translateX(calc(100% + 24px));
+		visibility: hidden;
 	}
 </style>

@@ -1,0 +1,8 @@
+[   52245ms] SyntaxError: Failed to execute 'replaceWith' on 'Element': Identifier 'initMusicPanel' has already been declared
+    at runScripts (http://127.0.0.1:4321/node_modules/astro/dist/transitions/router.js?v=84eda4bc:106:12)
+    at http://127.0.0.1:4321/node_modules/astro/dist/transitions/router.js?v=84eda4bc:355:11
+    at <anonymous>
+[   65859ms] SyntaxError: Failed to execute 'replaceWith' on 'Element': Identifier 'initMusicPanel' has already been declared
+    at runScripts (http://127.0.0.1:4321/node_modules/astro/dist/transitions/router.js?v=84eda4bc:106:12)
+    at http://127.0.0.1:4321/node_modules/astro/dist/transitions/router.js?v=84eda4bc:355:11
+    at <anonymous>

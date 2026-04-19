@@ -6,13 +6,24 @@ interface Props {
 }
 
 const { tracks } = Astro.props as Props;
-const firstTrack = tracks[0];
+
+const normalizeDurationLabel = (value: string) => {
+  const [minutes = '0', seconds = '00'] = String(value ?? '').split(':');
+  return `${Number.parseInt(minutes, 10) || 0}:${seconds.padStart(2, '0')}`;
+};
 ---
 
 <section class="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100" data-music-panel>
   <div class="mb-4 flex items-center justify-between gap-3">
     <h2 class="text-lg font-bold text-zinc-900 dark:text-zinc-100">喜欢的歌 / Music</h2>
     <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-700"
+        data-music-toggle-play
+      >
+        播放
+      </button>
       <button
         type="button"
         class="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-700"
@@ -32,7 +43,7 @@ const firstTrack = tracks[0];
 
   {
     tracks.length === 0 ? (
-      <p class="text-sm text-zinc-600 dark:text-zinc-300">
+      <p class="text-sm text-zinc-600 dark:text-zinc-300" data-music-empty>
         音乐列表暂不可用。请先在 <code>.env</code> 配置 <code>NETEASE_MUSIC_U</code>、<code>NETEASE_CSRF</code>（或
         <code>NETEASE_COOKIE</code>）和 <code>NETEASE_PLAYLIST_ID</code>。
       </p>
@@ -49,6 +60,7 @@ const firstTrack = tracks[0];
                   data-artist={track.artist}
                   data-id={track.id}
                   data-index={index}
+                  aria-pressed={index === 0 ? 'true' : 'false'}
                   aria-label={`播放 ${track.name}`}
                 >
                   <img src={track.cover} alt={track.name} class="h-12 w-12 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
@@ -56,84 +68,32 @@ const firstTrack = tracks[0];
                     <strong class="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{track.name}</strong>
                     <span class="block text-xs text-zinc-600 dark:text-zinc-300">{track.artist}</span>
                   </span>
-                  <time class="text-xs tabular-nums text-zinc-500 dark:text-zinc-300">{track.duration}</time>
+                  <time class="text-xs tabular-nums text-zinc-500 dark:text-zinc-300">{normalizeDurationLabel(track.duration)}</time>
                 </button>
               </li>
             ))
           }
         </ul>
-
-        <div class="mt-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-600 dark:bg-zinc-900">
-          <p id="music-now-playing" class="mb-2 text-center text-sm text-zinc-700 dark:text-zinc-200">
-            Playing: {firstTrack ? `${firstTrack.name} - ${firstTrack.artist}` : '--'}
-          </p>
-          <audio id="music-audio" class="w-full" controls preload="none" src={firstTrack?.playUrl}></audio>
-        </div>
       </>
     )
   }
 </section>
 
-<script is:inline>
-  const STORAGE_KEY = 'global_music_player_state_v1';
-  // 前端播放控制：点击播放、刷新列表、随机播放、顺序连播。
-  const panel = document.querySelector('[data-music-panel]');
-  if (panel) {
-    const audio = panel.querySelector('#music-audio');
-    const nowPlaying = panel.querySelector('#music-now-playing');
-    const refreshBtn = panel.querySelector('[data-music-refresh]');
-    const randomPlayBtn = panel.querySelector('[data-music-random-play]');
-    const list = panel.querySelector('[data-music-list]');
-    // 当前播放索引，用于“下一首”逻辑。
-    let currentIndex = 0;
-    let lastSavedAt = 0;
+<script is:inline data-astro-rerun>
+  (() => {
+    const initMusicPanel = () => {
+      const panel = document.querySelector('[data-music-panel]');
+      if (!panel || panel.dataset.bound) return;
+      panel.dataset.bound = '1';
 
-    // 统一更新“正在播放”文案，方便后续维护。
-    const setNowPlaying = (name, artist) => {
-      if (!nowPlaying) return;
-      nowPlaying.textContent = `Playing: ${name} - ${artist}`;
-    };
-
-    // 通过列表按钮播放，可同时更新当前索引。
-    const playTrack = (button, index) => {
-      const url = button.getAttribute('data-url');
-      const name = button.getAttribute('data-name');
-      const artist = button.getAttribute('data-artist');
-      if (!audio || !url) return;
-      if (audio.src !== url) {
-        audio.src = url;
-      }
-      if (name && artist) {
-        setNowPlaying(name, artist);
-      }
-      if (typeof index === 'number' && Number.isFinite(index)) {
-        currentIndex = index;
-      }
-      audio.play().catch(() => {});
-    };
-
-    const escapeHTML = (value) =>
-      String(value)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-
-    const bindTriggers = () => {
-      // 刷新会替换列表 DOM，需重新绑定事件。
-      const triggers = panel.querySelectorAll('.music-trigger');
-      triggers.forEach((trigger) => {
-        trigger.addEventListener('click', () => {
-          const index = Number(trigger.getAttribute('data-index') ?? '0');
-          playTrack(trigger, index);
-        });
-      });
-      return Array.from(triggers);
-    };
-
-    const buildPlaylistSnapshot = () =>
-      currentTriggers.map((trigger, index) => ({
+      const nowPlaying = panel.querySelector('#music-now-playing');
+      const refreshButtons = Array.from(panel.querySelectorAll('[data-music-refresh]'));
+      const randomPlayButtons = Array.from(panel.querySelectorAll('[data-music-random-play]'));
+      const togglePlayBtn = panel.querySelector('[data-music-toggle-play]');
+      const list = panel.querySelector('[data-music-list]');
+      const emptyMessage = panel.querySelector('[data-music-empty]');
+      let currentIndex = 0;
+      let currentPlaylist = Array.from(panel.querySelectorAll('.music-trigger')).map((trigger, index) => ({
         id: Number(trigger.getAttribute('data-id') ?? '0'),
         name: trigger.getAttribute('data-name') ?? '',
         artist: trigger.getAttribute('data-artist') ?? '',
@@ -142,72 +102,84 @@ const firstTrack = tracks[0];
         cover: trigger.querySelector('img')?.getAttribute('src') ?? '',
         index,
       }));
+      let currentTrackId = Number(currentPlaylist[0]?.id ?? 0);
 
-    const saveState = () => {
-      if (!audio) return;
-      const current = currentTriggers[currentIndex];
-      const payload = {
-        currentTrackId: Number(current?.getAttribute('data-id') ?? 0),
-        currentIndex,
-        currentTime: Number(audio.currentTime || 0),
-        isPlaying: !audio.paused,
-        playlist: buildPlaylistSnapshot(),
-        updatedAt: Date.now(),
+      const formatTime = (value) => {
+        const totalSeconds = Math.max(0, Math.floor(Number(value) || 0));
+        const minutes = Math.floor(totalSeconds / 60)
+          .toString()
+          .padStart(1, '0');
+        const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+        return `${minutes}:${seconds}`;
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    };
 
-    const trySaveState = () => {
-      const now = Date.now();
-      if (now - lastSavedAt < 800) return;
-      lastSavedAt = now;
-      saveState();
-    };
+      const normalizeDurationLabel = (value) => {
+        const [minutes = '0', seconds = '00'] = String(value ?? '').split(':');
+        return `${Number.parseInt(minutes, 10) || 0}:${String(seconds).padStart(2, '0')}`;
+      };
 
-    const playTrackByIndex = (index) => {
-      // 用取模把索引约束到有效范围，支持循环播放。
-      if (currentTriggers.length === 0) return;
-      const safeIndex = ((index % currentTriggers.length) + currentTriggers.length) % currentTriggers.length;
-      const target = currentTriggers[safeIndex];
-      playTrack(target, safeIndex);
-      saveState();
-    };
+      const escapeHTML = (value) =>
+        String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
 
-    let currentTriggers = bindTriggers();
+      const syncActiveTrigger = () => {
+        currentTriggers.forEach((trigger, index) => {
+          const triggerId = Number(trigger.getAttribute('data-id') ?? '0');
+          const isActive = (currentTrackId > 0 && triggerId === currentTrackId) || (currentTrackId <= 0 && index === currentIndex);
+          trigger.classList.toggle('is-active', isActive);
+          trigger.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          const durationText = trigger.querySelector('time');
+          const playlistTrack = currentPlaylist[index];
+          if (durationText) {
+            if (isActive) {
+              const currentTime = Number(window.__GLOBAL_MUSIC_PLAYER__?.getState?.()?.currentTime ?? 0);
+              durationText.textContent = `${formatTime(currentTime)} / ${normalizeDurationLabel(playlistTrack?.duration ?? '0:00')}`;
+            } else {
+              durationText.textContent = normalizeDurationLabel(playlistTrack?.duration ?? '0:00');
+            }
+          }
+        });
+      };
 
-    if (randomPlayBtn) {
-      randomPlayBtn.addEventListener('click', () => {
-        if (currentTriggers.length === 0) return;
-        const pickIndex = Math.floor(Math.random() * currentTriggers.length);
-        playTrackByIndex(pickIndex);
-      });
-    }
+      const setNowPlaying = (name, artist) => {
+        if (!nowPlaying) return;
+        nowPlaying.textContent = `Playing: ${name} - ${artist}`;
+      };
 
-    // 顺序连播：当前歌曲结束后播下一首，最后一首回到第一首。
-    if (audio) {
-      audio.addEventListener('ended', () => {
-        if (currentTriggers.length === 0) return;
-        const nextIndex = (currentIndex + 1) % currentTriggers.length;
-        playTrackByIndex(nextIndex);
-      });
-      audio.addEventListener('timeupdate', trySaveState);
-      audio.addEventListener('play', saveState);
-      audio.addEventListener('pause', saveState);
-    }
+      const bindTriggers = () => {
+        const triggers = panel.querySelectorAll('.music-trigger');
+        triggers.forEach((trigger) => {
+          trigger.addEventListener('click', () => {
+            const index = Number(trigger.getAttribute('data-index') ?? '0');
+            window.__GLOBAL_MUSIC_PLAYER__?.playTrackByIndex?.(index);
+          });
+        });
+        return Array.from(triggers);
+      };
 
-    if (refreshBtn && list) {
-      refreshBtn.addEventListener('click', async () => {
-        const wasPlaying = !!audio && !audio.paused;
-        refreshBtn.setAttribute('disabled', 'true');
-        refreshBtn.textContent = '刷新中...';
-        try {
-          const res = await fetch('/api/music/random.json', { cache: 'no-store' });
-          if (!res.ok) throw new Error('failed');
-          const data = await res.json();
-          const tracks = Array.isArray(data?.tracks) ? data.tracks : [];
-          list.innerHTML = tracks
-            .map(
-              (track, index) => `
+      const renderPlaylist = (playlist) => {
+        if (!list) return;
+        currentPlaylist = Array.isArray(playlist) ? playlist : [];
+
+        if (currentPlaylist.length === 0) {
+          list.innerHTML = '';
+          currentTriggers = [];
+          panel.dataset.empty = 'true';
+          if (emptyMessage) emptyMessage.hidden = false;
+          syncActiveTrigger();
+          return;
+        }
+
+        panel.dataset.empty = 'false';
+        if (emptyMessage) emptyMessage.hidden = true;
+
+        list.innerHTML = currentPlaylist
+          .map(
+            (track, index) => `
               <li>
                 <button
                   class="music-trigger grid w-full grid-cols-[52px_1fr_auto] items-center gap-3 rounded-xl p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-700"
@@ -216,6 +188,7 @@ const firstTrack = tracks[0];
                   data-artist="${escapeHTML(track.artist ?? '')}"
                   data-id="${escapeHTML(track.id ?? 0)}"
                   data-index="${index}"
+                  aria-pressed="false"
                   aria-label="播放 ${escapeHTML(track.name ?? '')}"
                 >
                   <img src="${escapeHTML(track.cover ?? '')}" alt="${escapeHTML(track.name ?? '')}" class="h-12 w-12 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
@@ -223,62 +196,152 @@ const firstTrack = tracks[0];
                     <strong class="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">${escapeHTML(track.name ?? '')}</strong>
                     <span class="block text-xs text-zinc-600 dark:text-zinc-300">${escapeHTML(track.artist ?? '')}</span>
                   </span>
-                  <time class="text-xs tabular-nums text-zinc-500 dark:text-zinc-300">${escapeHTML(track.duration ?? '')}</time>
+                  <time class="text-xs tabular-nums text-zinc-500 dark:text-zinc-300">${escapeHTML(normalizeDurationLabel(track.duration ?? '0:00'))}</time>
                 </button>
               </li>`,
-            )
-            .join('');
-          // 刷新后列表节点已重建，需要重新绑定点击事件。
-          currentTriggers = bindTriggers();
-          currentIndex = 0;
-          if (audio && tracks[0]?.playUrl) {
-            // 刷新后同步播放器音源，避免“显示新歌但播放旧歌”。
-            audio.src = tracks[0].playUrl;
-            if (wasPlaying) {
-              audio.play().catch(() => {});
+          )
+          .join('');
+
+        currentTriggers = bindTriggers();
+        syncActiveTrigger();
+      };
+
+      const syncRangeFill = (input) => {
+        if (!input) return;
+        const min = Number(input.min || 0);
+        const max = Number(input.max || 0);
+        const value = Number(input.value || 0);
+        const percent = max <= min ? 0 : ((value - min) / (max - min)) * 100;
+        input.style.setProperty('--music-range-progress', `${Math.max(0, Math.min(100, percent))}%`);
+      };
+
+      let currentTriggers = bindTriggers();
+      syncActiveTrigger();
+
+      const applyState = (state) => {
+        if (!state || typeof state !== 'object') return;
+
+        const playlist = Array.isArray(state.playlist) ? state.playlist : [];
+        const playlistChanged =
+          playlist.length !== currentPlaylist.length ||
+          playlist.some((track, index) => {
+            const existing = currentPlaylist[index];
+            return !existing || existing.id !== track.id || existing.playUrl !== track.playUrl;
+          });
+
+        if (playlistChanged) {
+          renderPlaylist(playlist);
+        }
+
+        currentIndex = Number.isFinite(state.currentIndex) ? state.currentIndex : 0;
+        currentTrackId = Number(state.currentTrackId ?? currentPlaylist[currentIndex]?.id ?? 0);
+        syncActiveTrigger();
+
+        const nowPlayingState = state.nowPlaying;
+        if (nowPlayingState?.name || nowPlayingState?.artist) {
+          setNowPlaying(nowPlayingState?.name ?? '--', nowPlayingState?.artist ?? '--');
+        } else {
+          const currentTrack = currentPlaylist[currentIndex];
+          setNowPlaying(currentTrack?.name ?? '--', currentTrack?.artist ?? '--');
+        }
+
+        if (togglePlayBtn) {
+          const isPlaying = Boolean(state.isPlaying);
+          togglePlayBtn.textContent = isPlaying ? '暂停' : '播放';
+          togglePlayBtn.setAttribute('aria-label', isPlaying ? '暂停播放' : '开始播放');
+        }
+      };
+
+      const syncFromGlobalPlayer = () => {
+        const state = window.__GLOBAL_MUSIC_PLAYER__?.getState?.();
+        if (state) {
+          applyState(state);
+        }
+      };
+
+      randomPlayButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          window.__GLOBAL_MUSIC_PLAYER__?.playRandomTrack?.();
+        });
+      });
+
+      if (togglePlayBtn) {
+        togglePlayBtn.addEventListener('click', () => {
+          window.__GLOBAL_MUSIC_PLAYER__?.togglePlayPause?.();
+        });
+      }
+
+      refreshButtons.forEach((button) => {
+        button.addEventListener('click', async () => {
+          const originalLabel = button.textContent;
+          button.setAttribute('disabled', 'true');
+          if (button.textContent?.trim()) {
+            button.textContent = '刷新中...';
+          }
+          try {
+            await window.__GLOBAL_MUSIC_PLAYER__?.refreshPlaylist?.();
+            syncFromGlobalPlayer();
+          } catch (error) {
+            console.error('[music] refresh failed', error);
+          } finally {
+            button.removeAttribute('disabled');
+            if (button.textContent?.trim()) {
+              button.textContent = originalLabel || '刷新';
             }
           }
-          if (tracks[0]) {
-            setNowPlaying(tracks[0].name ?? '--', tracks[0].artist ?? '--');
-            saveState();
-          } else if (audio) {
-            audio.pause();
-            audio.removeAttribute('src');
-            audio.load();
-            if (nowPlaying) nowPlaying.textContent = 'Playing: --';
-            saveState();
-          }
-        } catch (error) {
-          console.error('[music] refresh failed', error);
-        } finally {
-          refreshBtn.removeAttribute('disabled');
-          refreshBtn.textContent = '刷新';
-        }
+        });
       });
-    }
-  }
+
+      window.addEventListener('global-music-player:state', (event) => {
+        applyState(event.detail);
+      });
+      window.addEventListener('global-music-player:ready', syncFromGlobalPlayer);
+
+      syncFromGlobalPlayer();
+    };
+
+    initMusicPanel();
+    document.addEventListener('astro:page-load', initMusicPanel);
+  })();
 </script>
 
 <style is:global>
-  /* 调整原生音频控件强调色，避免深色模式下白色过于突兀。 */
-  [data-music-panel] audio {
-    accent-color: #52525b;
+  [data-music-panel] .music-trigger {
+    border: 1px solid transparent;
   }
 
-  .dark [data-music-panel] audio {
-    color-scheme: dark;
-    accent-color: #a1a1aa;
-    background-color: #18181b;
-    border-radius: 9999px;
+  [data-music-panel] .music-trigger.is-active {
+    border-color: rgb(161 161 170);
+    background: rgb(244 244 245);
+    box-shadow: inset 0 0 0 1px rgb(228 228 231);
   }
 
-  /* Chromium/Safari：压暗原生控件面板背景。 */
-  .dark [data-music-panel] audio::-webkit-media-controls-enclosure {
-    background-color: #18181b;
-    border-radius: 9999px;
+  [data-music-panel] .music-trigger.is-active strong,
+  [data-music-panel] .music-trigger.is-active time,
+  [data-music-panel] .music-trigger.is-active span {
+    color: rgb(24 24 27);
   }
 
-  .dark [data-music-panel] audio::-webkit-media-controls-panel {
-    background-color: #18181b;
+  [data-music-panel] .music-trigger:focus-visible {
+    outline: none;
+    border-color: rgb(113 113 122);
+    box-shadow: 0 0 0 3px rgb(228 228 231);
+  }
+
+  .dark [data-music-panel] .music-trigger.is-active {
+    border-color: rgb(82 82 91);
+    background: rgb(39 39 42);
+    box-shadow: inset 0 0 0 1px rgb(63 63 70);
+  }
+
+  .dark [data-music-panel] .music-trigger.is-active strong,
+  .dark [data-music-panel] .music-trigger.is-active time,
+  .dark [data-music-panel] .music-trigger.is-active span {
+    color: rgb(244 244 245);
+  }
+
+  .dark [data-music-panel] .music-trigger:focus-visible {
+    border-color: rgb(161 161 170);
+    box-shadow: 0 0 0 3px rgb(63 63 70);
   }
 </style>

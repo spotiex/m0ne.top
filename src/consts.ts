@@ -36,7 +36,7 @@ export const HOME_GALLERY_ITEMS: GalleryItem[] = [
 		src: 'https://img.m0ne.dpdns.org/2026/04/1236a8d2be1df5c1f14c5d84dfda1141.JPG',
 		alt: '',
 		title: '',
-		tags: ['动物']
+		tags: ['人物']
 	},
 	{
 		src: 'https://img.m0ne.dpdns.org/2026/04/f434feb06198277ce00797876d5198d7.JPG',
@@ -61,9 +61,11 @@ export const HOME_GALLERY_ITEMS: GalleryItem[] = [
 		alt:'',
 		title:'',
 		tags: ['旅行', '动物']
+	},
+	{
+		src: 'https://img.m0ne.dpdns.org/2026/04/80c8660141e2df60a65bbfaf22c9a9ef.JPG',
+		alt: 'Churchill',
+		title: 'Churchill',
+		tags: ['人物']
 	}
-
-
-
-
 ];
