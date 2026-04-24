@@ -2,6 +2,7 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Prose from '../../components/Prose.astro';
+import TwikooComments from '../../components/TwikooComments.astro';
 import { SITE_TITLE } from '../../consts';
 
 type Props = CollectionEntry<'fragments'>;
@@ -16,16 +17,24 @@ export async function getStaticPaths() {
 
 const fragment = Astro.props as Props;
 const { Content } = await render(fragment);
-const { title, description, pubDate, mood } = fragment.data;
+const { title, description, pubDate, location, weather } = fragment.data;
+const fragmentMeta = [location, weather].filter(Boolean).join(' · ');
 ---
 
 <BaseLayout title={`${title} - ${SITE_TITLE}`} description={description}>
 	<div class='container max-w-3xl'>
 		<article>
 			<header class='mb-6 border-b border-zinc-200 dark:border-zinc-700 pb-4'>
+				<a
+					href='/fragments/'
+					class='inline-flex items-center gap-2 text-sm font-medium no-underline text-zinc-500 transition-colors duration-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
+				>
+					<span aria-hidden='true'>←</span>
+					<span>返回 Fragments</span>
+				</a>
 				<p class='text-sm text-zinc-500 dark:text-zinc-400 mb-2'>
 					<time>{pubDate.toLocaleDateString('zh-CN')}</time>
-					{mood && <span> · {mood}</span>}
+					{fragmentMeta && <span> · {fragmentMeta}</span>}
 				</p>
 				<h1 class='text-3xl font-semibold leading-tight m-0'>{title}</h1>
 			</header>
@@ -35,6 +44,7 @@ const { title, description, pubDate, mood } = fragment.data;
 					<Content />
 				</div>
 			</Prose>
+			<TwikooComments path={Astro.url.pathname} />
 		</article>
 	</div>
 </BaseLayout>

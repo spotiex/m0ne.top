@@ -6,7 +6,7 @@ import PostsByYear from '../../components/PostsByYear.astro';
 
 type BlogPost = CollectionEntry<'blog'>;
 const title = '兴尽悲来，瞎写的文绉绉'
-const description = '其实是一些长一点的文段，可能是技术文章，可能是生活感悟，反正就是比碎片化的内容更长一点的东西了。';
+const description = '其实是一些长一点的文段，可能是技术文章，可能是生活感悟，反正就是比碎片化的内容更长一点的东西了';
 
 const posts = (await getCollection('blog')).sort((a: BlogPost, b: BlogPost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---

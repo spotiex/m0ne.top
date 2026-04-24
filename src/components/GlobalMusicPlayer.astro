@@ -115,6 +115,7 @@ const firstTrack = tracks[0];
 <script is:inline>
 	const STORAGE_KEY = 'global_music_player_state_v1';
 	const MAX_RESTORABLE_STATE_AGE_MS = 1000 * 60 * 30;
+	const HOME_PLAYLIST_SESSION_KEY = 'home_music_playlist_initialized_v1';
 	const panel = document.querySelector('[data-global-music-panel]');
 	if (panel && !panel.dataset.bound) {
 		panel.dataset.bound = '1';
@@ -224,13 +225,37 @@ const firstTrack = tracks[0];
 			saveState();
 		};
 
-		const playTrack = (button, index, autoPlay = true) => {
+		const isCurrentTrigger = (button, index) => {
+			if (!audio || !button) return false;
+			const url = button.getAttribute('data-url') ?? '';
+			const triggerId = Number(button.getAttribute('data-id') ?? '0');
+			const activeTrigger = currentTriggers[currentIndex];
+			const activeTriggerId = Number(activeTrigger?.getAttribute('data-id') ?? '0');
+			const activeUrl = activeTrigger?.getAttribute('data-url') ?? '';
+			const normalizedAudioSrc = audio.currentSrc || audio.src || '';
+			return (
+				(Number.isFinite(index) ? index : -1) === currentIndex &&
+				((triggerId > 0 && triggerId === activeTriggerId) ||
+					(url && (url === activeUrl || normalizedAudioSrc.endsWith(url))))
+			);
+		};
+
+		const playTrack = (button, index, autoPlay = true, toggleIfCurrent = false) => {
 			if (!audio || !button) return;
 			const url = button.getAttribute('data-url');
 			const name = button.getAttribute('data-name');
 			const artist = button.getAttribute('data-artist');
 			const cover = button.querySelector('img')?.getAttribute('src') ?? '';
 			if (!url) return;
+			if (toggleIfCurrent && isCurrentTrigger(button, index)) {
+				if (audio.paused) {
+					audio.play().catch(() => {});
+				} else {
+					audio.pause();
+				}
+				saveState();
+				return;
+			}
 			if (audio.src !== url) audio.src = url;
 			currentIndex = Number.isFinite(index) ? index : 0;
 			if (name && artist) setNowPlaying(name, artist, cover);
@@ -243,7 +268,7 @@ const firstTrack = tracks[0];
 			triggers.forEach((trigger) => {
 				trigger.addEventListener('click', () => {
 					const index = Number(trigger.getAttribute('data-index') ?? '0');
-					playTrack(trigger, index, true);
+					playTrack(trigger, index, true, true);
 				});
 			});
 			return triggers;
@@ -251,11 +276,11 @@ const firstTrack = tracks[0];
 
 		let currentTriggers = bindTriggers();
 
-		const playTrackByIndex = (index, autoPlay = true) => {
+		const playTrackByIndex = (index, autoPlay = true, toggleIfCurrent = false) => {
 			if (currentTriggers.length === 0) return;
 			const safeIndex = ((index % currentTriggers.length) + currentTriggers.length) % currentTriggers.length;
 			const target = currentTriggers[safeIndex];
-			playTrack(target, safeIndex, autoPlay);
+			playTrack(target, safeIndex, autoPlay, toggleIfCurrent);
 		};
 
 		const playRandomTrack = () => {
@@ -328,6 +353,19 @@ const firstTrack = tracks[0];
 		};
 
 		restoreFromStorage();
+
+		const maybeInitHomePlaylist = async () => {
+			if (window.location.pathname !== '/') return;
+
+			try {
+				if (sessionStorage.getItem(HOME_PLAYLIST_SESSION_KEY) === '1') return;
+				sessionStorage.setItem(HOME_PLAYLIST_SESSION_KEY, '1');
+				await refreshPlaylist();
+			} catch (error) {
+				sessionStorage.removeItem(HOME_PLAYLIST_SESSION_KEY);
+				console.error('[music] initial home playlist refresh failed', error);
+			}
+		};
 
 		const refreshPlaylist = async () => {
 			const wasPlaying = !!audio && !audio.paused;
@@ -442,6 +480,7 @@ const firstTrack = tracks[0];
 		});
 
 		refreshBtn?.addEventListener('click', refreshPlaylist);
+		maybeInitHomePlaylist();
 
 	}
 </script>

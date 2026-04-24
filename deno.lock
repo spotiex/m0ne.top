@@ -27,6 +27,7 @@
         "npm:prettier@^3.3.3",
         "npm:sharp@~0.33.5",
         "npm:tailwindcss@^3.4.10",
+        "npm:twikoo@^1.7.7",
         "npm:typescript@^5.5.4",
         "npm:unist-util-visit@5",
         "npm:vite@^5.4.8"

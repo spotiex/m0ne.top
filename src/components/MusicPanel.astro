@@ -155,7 +155,7 @@ const normalizeDurationLabel = (value: string) => {
         triggers.forEach((trigger) => {
           trigger.addEventListener('click', () => {
             const index = Number(trigger.getAttribute('data-index') ?? '0');
-            window.__GLOBAL_MUSIC_PLAYER__?.playTrackByIndex?.(index);
+            window.__GLOBAL_MUSIC_PLAYER__?.playTrackByIndex?.(index, true, true);
           });
         });
         return Array.from(triggers);

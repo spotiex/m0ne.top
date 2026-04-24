@@ -6,11 +6,9 @@ import { Image } from 'astro:assets';
 import FormattedDate from '../components/FormattedDate.astro';
 import AboutTheAuthor from '../components/widgets/AboutTheAuthor.astro';
 import TableOfContent from '../components/widgets/TableOfContent.astro';
+import TwikooComments from '../components/TwikooComments.astro';
 import { slugify } from '../utils';
-import { loadEnv } from 'vite';
 import { render } from 'astro:content';
-
-const { GISCUS_REPO, GISCUS_REPO_ID, GISCUS_CATEGORY, GISCUS_CATEGORY_ID } = loadEnv(process.env.NODE_ENV || 'production', process.cwd(), '');
 
 export async function getStaticPaths() {
 	const posts = await getCollection('blog');
@@ -25,6 +23,7 @@ const {
 	data: { title, seoTitle, description, coverImage, pubDate, updatedDate, tags }
 } = post;
 const { Content, headings } = await render(post);
+const hasToc = Array.isArray(headings) && headings.some((heading: any) => heading?.depth === 2);
 const coverImageUrl = typeof coverImage === 'string' ? coverImage : coverImage?.src;
 ---
 
@@ -36,6 +35,13 @@ const coverImageUrl = typeof coverImage === 'string' ? coverImage : coverImage?.
 			<article>
 				<Prose>
 					<div>
+						<a
+							href='/posts/'
+							class='inline-flex items-center gap-2 text-sm font-medium no-underline text-zinc-500 transition-colors duration-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
+						>
+							<span aria-hidden='true'>←</span>
+							<span>返回 Posts</span>
+						</a>
 						<h1 class='!my-1 !font-semibold leading-tight'>{title}</h1>
             <div class='text-sm font-[500] mt-2 sm:mt-0 py-1 md:text-right flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center'>
               {
@@ -73,65 +79,52 @@ const coverImageUrl = typeof coverImage === 'string' ? coverImage : coverImage?.
 	          </div>
 					<Content />
 				</Prose>
-        {
-          GISCUS_REPO &&
-            <script
-              id='giscus-script'
-              is:inline
-              src='https://giscus.app/client.js'
-              data-repo={GISCUS_REPO}
-              data-repo-id={GISCUS_REPO_ID}
-              data-category={GISCUS_CATEGORY}
-              data-category-id={GISCUS_CATEGORY_ID}
-              data-mapping='pathname'
-              data-strict='0'
-              data-reactions-enabled='1'
-              data-emit-metadata='0'
-              data-input-position='bottom'
-              data-theme='preferred_color_scheme'
-              data-lang='en'
-              crossorigin='anonymous'
-              async></script>
-        }
-
+				<TwikooComments path={Astro.url.pathname} />
 			</article>
 		</main>
     <aside class='shrink-0 w-[280px] hidden lg:block'>
       <div class='mb-4'>
 				<AboutTheAuthor />
 			</div>
-      <div class='sticky top-20 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 p-2'>
-			  <TableOfContent headings={headings} />
-      </div>
+      {
+        hasToc && (
+          <div class='sticky top-20 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 p-2'>
+			      <TableOfContent headings={headings} />
+          </div>
+        )
+      }
 		</aside>
 	</div>
+  {
+    hasToc && (
+      <script async is:inline>
+      	const anchors = document.querySelectorAll('.prose h2[id], .prose h3[id]');
+      	const links = document.querySelectorAll('nav.toc [data-toc-link]');
+
+      	function observeToc() {
+      		if (typeof anchors != 'undefined' && anchors != null && typeof links != 'undefined' && links != null) {
+      			let scrollTop = window.scrollY;
+
+      			for (const link of links) {
+      				link.classList.remove('is-active');
+      			}
+      			for (var i = anchors.length - 1; i >= 0; i--) {
+      				if (scrollTop > anchors[i].offsetTop - 80) {
+      					links[i]?.classList.add('is-active');
+      					break;
+      				}
+      			}
+      		}
+      	}
+
+      	window.addEventListener('scroll', (event) => {
+      		observeToc(event);
+      	});
+      	window.addEventListener('hashchange', (event) => {
+      		observeToc(event);
+      	});
+      	observeToc();
+      </script>
+    )
+  }
 </BaseLayout>
-
-<script async is:inline>
-	const anchors = document.querySelectorAll('.prose h2[id], .prose h3[id]');
-	const links = document.querySelectorAll('nav.toc [data-toc-link]');
-
-	function observeToc() {
-		if (typeof anchors != 'undefined' && anchors != null && typeof links != 'undefined' && links != null) {
-			let scrollTop = window.scrollY;
-
-			for (const link of links) {
-				link.classList.remove('is-active');
-			}
-			for (var i = anchors.length - 1; i >= 0; i--) {
-				if (scrollTop > anchors[i].offsetTop - 80) {
-					links[i]?.classList.add('is-active');
-					break;
-				}
-			}
-		}
-	}
-
-	window.addEventListener('scroll', (event) => {
-		observeToc(event);
-	});
-	window.addEventListener('hashchange', (event) => {
-		observeToc(event);
-	});
-	observeToc();
-</script>

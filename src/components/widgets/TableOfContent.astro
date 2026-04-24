@@ -20,38 +20,42 @@ function buildToc(headings: any) {
 }
 ---
 
-<nav class='toc py-2'>
-	<h3 class='toc-title'>On This Page</h3>
-	<div class='toc-divider' aria-hidden='true'></div>
-	<ul class='toc-list max-h-[calc(100vh-70px)] overflow-auto text-[.825rem]'>
-		{
-			toc.map((heading: any) => (
-				<li>
-					<a
-						class='toc-link'
-						data-toc-link
-						href={'#' + heading.slug}>
-						{heading.text}
-					</a>
-					{heading.subheadings?.length > 0 && (
-						<ul>
-							{heading.subheadings.map((subheading: any) => (
-								<li>
-									<a
-										class='toc-link toc-link-sub'
-										data-toc-link
-										href={'#' + subheading.slug}>
-										{subheading.text}
-									</a>
-								</li>
-							))}
-						</ul>
-					)}
-				</li>
-			))
-		}
-	</ul>
-</nav>
+{
+	toc.length > 0 && (
+		<nav class='toc py-2'>
+			<h3 class='toc-title'>On This Page</h3>
+			<div class='toc-divider' aria-hidden='true'></div>
+			<ul class='toc-list max-h-[calc(100vh-70px)] overflow-auto text-[.825rem]'>
+				{
+					toc.map((heading: any) => (
+						<li>
+							<a
+								class='toc-link'
+								data-toc-link
+								href={'#' + heading.slug}>
+								{heading.text}
+							</a>
+							{heading.subheadings?.length > 0 && (
+								<ul>
+									{heading.subheadings.map((subheading: any) => (
+										<li>
+											<a
+												class='toc-link toc-link-sub'
+												data-toc-link
+												href={'#' + subheading.slug}>
+												{subheading.text}
+											</a>
+										</li>
+									))}
+								</ul>
+							)}
+						</li>
+					))
+				}
+			</ul>
+		</nav>
+	)
+}
 <style>
 	.toc-title {
 		margin: 0 0 0.35rem;

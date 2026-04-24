@@ -10,9 +10,9 @@ const fragments = (await getCollection('fragments')).sort((a: FragmentPost, b: F
 <BaseLayout title={`Fragments - ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
 	<div class='container'>
 		<div class='mb-8'>
-				<h1 class='text-3xl font-semibold mb-2'>随笔 / Fragments</h1>
+				<h1 class='text-3xl font-semibold mb-2'>一时兴致，脑海的灵光闪烁</h1>
 			<p class='text-zinc-700 dark:text-zinc-300'>
-				这里收录比文章更短、更即时的想法碎片。
+				这里收录比文章更短、更即时的想法碎片
 			</p>
 		</div>
 
@@ -25,10 +25,12 @@ const fragments = (await getCollection('fragments')).sort((a: FragmentPost, b: F
 								{note.data.title}
 							</a>
 						</h2>
-						<p class='mt-3 mb-0 leading-8 text-zinc-700 dark:text-zinc-200'>{note.data.description}</p>
+						<p class='mt-3 mb-0 text-sm leading-7 text-zinc-700 dark:text-zinc-200'>{note.data.description}</p>
 						<div class='mt-3 text-xs text-zinc-500 dark:text-zinc-400 flex gap-2'>
 							<time>{note.data.pubDate.toLocaleDateString('zh-CN')}</time>
-							{note.data.mood && <span>· {note.data.mood}</span>}
+							{(note.data.location || note.data.weather) && (
+								<span>· {[note.data.location, note.data.weather].filter(Boolean).join(' · ')}</span>
+							)}
 						</div>
 					</article>
 				))

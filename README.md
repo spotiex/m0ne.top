@@ -85,6 +85,17 @@ This project includes Decap CMS at `/admin` and an R2 upload API at `/api/admin/
 
 `coverImage` in post frontmatter now supports both local Astro-managed images and external URLs (e.g. R2 CDN links).
 
+## 💬 Twikoo Comments
+
+This project now supports Twikoo on post detail pages.
+
+Add these environment variables before build/deploy:
+
+| Variable | Example | Notes |
+| :-- | :-- | :-- |
+| `TWIKOO_ENV_ID` | `https://comments.example.com` | Required. Use your Twikoo `envId` or deployed service URL |
+| `TWIKOO_REGION` | `ap-guangzhou` | Optional. Only needed for some Tencent Cloud setups |
+
 ## 👀 Want to learn more?
 
 Check out [Astro documentation](https://docs.astro.build).

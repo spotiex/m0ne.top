@@ -43,16 +43,6 @@ const globalMusicTracks =
 				syncHomeFlag();
 			}
 			document.addEventListener('astro:page-load', syncHomeFlag);
-
-			if (window.netlifyIdentity) {
-				window.netlifyIdentity.on('init', (user) => {
-					if (!user) {
-						window.netlifyIdentity.on('login', () => {
-							document.location.href = '/admin/';
-						});
-					}
-				});
-			}
 		</script>
 		<!-- Google tag (gtag.js) -->
     {

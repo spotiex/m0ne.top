@@ -21,7 +21,8 @@ const fragments = defineCollection({
 		title: z.string(),
 		description: z.string(),
 		pubDate: z.coerce.date(),
-		mood: z.string().optional()
+		location: z.string().optional(),
+		weather: z.string().optional()
 	})
 });
 

@@ -23,7 +23,13 @@ import Prose from '../components/Prose.astro';
               </div>
             </Prose>
           </div>
-          <Image src={ME} alt="m0ne" width={300}  class="rounded-3xl rotate-3 mx-4 md:mx-0"/>
+          <Image
+            src={ME}
+            alt="m0ne"
+            width={720}
+            sizes="(min-width: 768px) 300px, min(100vw - 2rem, 300px)"
+            class="w-full max-w-[300px] rounded-3xl rotate-3 mx-4 md:mx-0"
+          />
         </div>     
         <div>
           <p>

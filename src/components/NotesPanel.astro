@@ -28,7 +28,9 @@ const { notes = [] } = Astro.props;
 							<p class='note-content'>{note.data.description}</p>
 							<div class='note-meta'>
 								<time>{note.data.pubDate.toLocaleDateString('zh-CN')}</time>
-								{note.data.mood && <span>{note.data.mood}</span>}
+								{(note.data.location || note.data.weather) && (
+									<span>{[note.data.location, note.data.weather].filter(Boolean).join(' · ')}</span>
+								)}
 							</div>
 						</a>
 					))

@@ -1,3 +1,0 @@
-[    2783ms] ReferenceError: Cannot access 'currentPlaylist' before initialization
-    at http://127.0.0.1:4321/:4505:33
-    at http://127.0.0.1:4321/:4766:5

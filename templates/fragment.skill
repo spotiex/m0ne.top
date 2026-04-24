@@ -1,4 +1,12 @@
+---
+title: '这里写碎片标题'
+description: '一句话摘要，简短即可'
+pubDate: '2026-04-16'
+mood: 'calm'
+---
+
 # Fragment Template
+
 
 这是一份碎片化短内容模板，不会被 Astro 渲染。
 
@@ -8,13 +16,6 @@
 
 推荐目录示例：
 `src/content/fragments/2026-04-16-night-note/index.md`
-
----
-title: '这里写碎片标题'
-description: '一句话摘要，简短即可'
-pubDate: '2026-04-16'
-mood: 'calm'
----
 
 今天记录一个短瞬间。
 

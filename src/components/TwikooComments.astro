@@ -1,0 +1,161 @@
+---
+import { loadEnv } from 'vite';
+
+interface Props {
+	path?: string;
+}
+
+const { TWIKOO_ENV_ID, TWIKOO_REGION } = loadEnv(process.env.NODE_ENV || 'production', process.cwd(), '');
+const { path = Astro.url.pathname } = Astro.props;
+
+const enabled = Boolean(TWIKOO_ENV_ID);
+---
+
+{
+	enabled && (
+		<section class='mt-10 border-t border-zinc-200 pt-6 dark:border-zinc-700'>
+			<div
+				id='tcomment'
+				data-env-id={TWIKOO_ENV_ID}
+				data-region={TWIKOO_REGION || ''}
+				data-path={path}>
+				<p style='margin:0;padding:16px 0;color:#71717a;font-size:14px;'>Twikoo 正在加载…</p>
+			</div>
+			<script>
+				const pageLoadFlag = '__twikooPageLoadBound';
+				const timeObserverFlag = '__twikooTimeObserver';
+				const runtimeWindow = window as unknown as Window & Record<string, unknown>;
+				const pad = (value: number) => String(value).padStart(2, '0');
+
+				const formatAbsoluteTime = (input: string) => {
+					const date = new Date(input);
+					if (Number.isNaN(date.getTime())) return null;
+
+					return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+				};
+
+				const renderError = (message: string) => {
+					const container =
+						document.querySelector<HTMLDivElement>('#tcomment') ||
+						document.querySelector<HTMLDivElement>('.twikoo');
+					if (!container) return;
+					container.innerHTML =
+						'<p style="margin:0;padding:16px 0;color:#71717a;font-size:14px;">' + message + '</p>';
+				};
+
+				const syncCommentTimes = () => {
+					const timeWrappers = document.querySelectorAll<HTMLElement>('.twikoo .tk-time');
+
+					timeWrappers.forEach((wrapper) => {
+						const timeNode = wrapper.querySelector<HTMLTimeElement>('time');
+						const rawTime = timeNode?.getAttribute('datetime') || timeNode?.getAttribute('title');
+						if (!rawTime) return;
+
+						const formatted = formatAbsoluteTime(rawTime);
+						if (!formatted) return;
+
+						const datetimeValue = new Date(rawTime).toISOString();
+						const currentText = timeNode?.textContent?.trim();
+
+						if (currentText === formatted && timeNode?.getAttribute('title') === formatted) {
+							return;
+						}
+
+						wrapper.replaceChildren();
+
+						const nextTimeNode = document.createElement('time');
+						nextTimeNode.dateTime = datetimeValue;
+						nextTimeNode.title = formatted;
+						nextTimeNode.textContent = formatted;
+						wrapper.append(nextTimeNode);
+					});
+				};
+
+				const ensureTimeObserver = () => {
+					const container =
+						document.querySelector<HTMLDivElement>('.twikoo') ||
+						document.querySelector<HTMLDivElement>('#tcomment');
+					if (!container) return;
+
+					const previousObserver = runtimeWindow[timeObserverFlag] as MutationObserver | undefined;
+					previousObserver?.disconnect();
+
+					const observer = new MutationObserver(() => {
+						syncCommentTimes();
+					});
+
+					observer.observe(container, {
+						childList: true,
+						subtree: true,
+						characterData: true
+					});
+
+					runtimeWindow[timeObserverFlag] = observer;
+				};
+
+				const loadTwikoo = async () => {
+					const module = await import('twikoo');
+					const twikoo = module.default;
+					if (typeof twikoo === 'function') {
+						return twikoo;
+					}
+					if (typeof twikoo?.init === 'function') {
+						return twikoo.init.bind(twikoo);
+					}
+					throw new TypeError('Twikoo init function is unavailable');
+				};
+
+				const mountTwikoo = async () => {
+					const container = document.querySelector<HTMLDivElement>('#tcomment');
+					if (!container) return;
+
+					const envId = container.getAttribute('data-env-id');
+					const region = container.getAttribute('data-region');
+					const pagePath = container.getAttribute('data-path') || window.location.pathname;
+
+					if (!envId) {
+						renderError('Twikoo 未配置 TWIKOO_ENV_ID。');
+						return;
+					}
+
+					container.innerHTML = '';
+
+					const initOptions: {
+						envId: string;
+						el: string;
+						lang: string;
+						path: string;
+						region?: string;
+					} = {
+						envId,
+						el: '#tcomment',
+						lang: 'zh-CN',
+						path: pagePath
+					};
+
+					if (region) {
+						initOptions.region = region;
+					}
+
+					try {
+						const initTwikoo = await loadTwikoo();
+						await initTwikoo(initOptions);
+						window.setTimeout(syncCommentTimes, 300);
+						window.setTimeout(syncCommentTimes, 1200);
+						ensureTimeObserver();
+					} catch (error) {
+						console.error('Failed to initialize Twikoo', error);
+						renderError('Twikoo 初始化失败，请检查浏览器控制台或评论服务配置。');
+					}
+				};
+
+				if (!runtimeWindow[pageLoadFlag]) {
+					document.addEventListener('astro:page-load', mountTwikoo);
+					runtimeWindow[pageLoadFlag] = true;
+				}
+
+				mountTwikoo();
+			</script>
+		</section>
+	)
+}
