@@ -1,7 +1,8 @@
 ---
 title: 'AI 时代的浪'
-description: 'DeepSeek V4 的出现'
-pubDate: '2026-04-16'
+description: 'DeepSeek V4 的出现让技术圈沸腾，此次 DeepSeek 与华为昇腾的合结果 ，或将是 CUDA 护城河动摇的开始。'
+pubDate: '2026-04-24'
+tags: ['AI', '技术观察']
 location: '北京 海淀'
 weather: '晴'
 ---
