@@ -1,19 +1,15 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProjectList from '../../components/ProjectList.astro';
-import { projects } from './projects';
-
+import { projects } from '../../data/projects';
 ---
 
-<BaseLayout
-	title="All My Projects"
-	description="All my project portfolio from real projects to open source projects."
->
-  <div class='container'>
-    <div class="mb-10">
-      <h1 class="text-3xl font-bold mb-2">All My Projects</h1>
-      <p class="text-zinc-700 dark:text-zinc-300 text-lg">All my project portfolio from real projects to open source projects.</p>
-    </div>
-    <ProjectList projects={projects}/>
-  </div>
+<BaseLayout title='纸上电路，用A-Z a-z组成的成就' description='一些自己写过、维护过，或真正跟着学过的公开仓库。'>
+	<div class='container'>
+		<div class='mb-10'>
+			<h1 class='text-3xl font-bold mb-2'>纸上电路，用A-Z a-z组成的成就</h1>
+			<p class='text-zinc-700 dark:text-zinc-300'>这里收拢我自己写过、维护过，或真正跟着学过的代码流。代码有时像草稿，有时像工具，但总归是把脑子里的念头落到屏幕上的痕迹。</p>
+		</div>
+		<ProjectList projects={projects} />
+	</div>
 </BaseLayout>

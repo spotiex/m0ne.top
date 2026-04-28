@@ -4,6 +4,7 @@
 export const SITE_TITLE = 'm0ne';
 export const SITE_TAGLINE = '平静的水面之下总是暗流汹涌'; // site tagline
 export const SITE_DESCRIPTION = '鼓励每个人积极维护数字时代的个人资产！'; // site meta description for SEO
+export const GITHUB_PROFILE_URL = 'https://github.com/spotiex';
 
 export interface GalleryItem {
 	src: string;

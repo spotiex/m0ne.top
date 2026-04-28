@@ -1,101 +1,131 @@
-# Devolio
+# m0ne.top
 
-Devolio is a free portfolio and blog template to help you setup your personal website quickly.
+Personal blog and digital garden for `m0ne`, built with Astro and Tailwind CSS.
 
-[Demo](https://devolio.devaradise.com) [Article](https://devaradise.com/devolio-astro-portfolio-blog-theme/)
+The site keeps longer posts, short fragments, photos, project notes, a donation page, RSS, sitemap, Twikoo comments, and a NetEase Cloud Music panel in one static-first Astro project.
 
----
+This site is customized from the [Devolio](https://devolio.devaradise.com) Astro portfolio and blog template by [devaradise](https://devaradise.com/). The current repository keeps that origin visible out of respect for the original creator's work.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/devaradise/devolio)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/devaradise/devolio)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/devaradise/devolio?devcontainer_path=.devcontainer/blog/devcontainer.json)
+## Tech Stack
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/netlify-templates/next-netlify-starter)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdevaradise%2Fdevolio)
+- Astro 5
+- TypeScript
+- Tailwind CSS
+- Astro Content Collections for blog posts and fragments
+- MDX support
+- Netlify adapter
+- Twikoo comments
+- NetEase Cloud Music API integration
 
-Features:
-
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
-- ✅ Post tags
-- ✅ Projects
-- ✅ Table of content
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
+## Project Structure
 
 ```text
-├── public/
+├── public/                  # Static files and Netlify headers
 ├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-│   └── styles/
+│   ├── assets/              # Local images and icons
+│   ├── components/          # Astro UI components
+│   ├── content/
+│   │   ├── blog/            # Long-form posts
+│   │   └── fragments/       # Short notes / fragments
+│   ├── data/                # Project list data
+│   ├── layouts/             # Shared page layouts
+│   ├── lib/                 # Runtime integrations
+│   ├── pages/               # Site routes and API endpoints
+│   └── styles/              # Global CSS
 ├── astro.config.mjs
-├── README.md
 ├── package.json
 └── tsconfig.json
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Main Routes
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+- `/` - home page with recent posts, fragments, photos, projects, and music
+- `/posts/` - long-form blog archive
+- `/fragments/` - short-form notes
+- `/photos/` - photo gallery backed by `HOME_GALLERY_ITEMS`
+- `/photos/management/` - local development helper for adding gallery items
+- `/projects/` - project list from `src/data/projects.ts`
+- `/tags/` - tag index
+- `/about/` - about page
+- `/donate/` - donation page
+- `/rss.xml` - RSS feed
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+## Content
 
-Any static assets, like images, can be placed in the `public/` directory.
+Long-form posts live in `src/content/blog/`:
 
-## 🧞 Commands
+```yaml
+---
+title: "Post title"
+seoTitle: "Optional SEO title"
+description: "Short summary"
+pubDate: 2026-04-28
+updatedDate: 2026-04-28
+tags: ["博客"]
+coverImage: "./cover.jpg"
+---
+```
 
-All commands are run from the root of the project, from a terminal:
+Short fragments live in `src/content/fragments/`:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm run dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm run build`           | Build your production site to `./dist/`          |
-| `pnpm run preview`         | Preview your build locally, before deploying     |
-| `pnpm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm run astro -- --help` | Get help using the Astro CLI                     |
+```yaml
+---
+title: "Fragment title"
+description: "Short summary"
+pubDate: 2026-04-28
+tags: ["随笔"]
+location: "Beijing"
+weather: "Sunny"
+---
+```
 
-## 📝 Visual Editing + R2 Uploads (Netlify)
+Photo gallery items are currently maintained in `src/consts.ts` through `HOME_GALLERY_ITEMS`. The `/api/photos/add.json` endpoint only works in local development and updates that array.
 
-This project includes Decap CMS at `/admin` and an R2 upload API at `/api/admin/r2-upload`.
+Project cards are maintained in `src/data/projects.ts`.
 
-1. Keep Netlify Identity + Git Gateway enabled for CMS auth/editor access.
-2. Add these Netlify environment variables:
+## Environment Variables
 
-| Variable | Example | Notes |
+Twikoo comments:
+
+| Variable | Required | Notes |
 | :-- | :-- | :-- |
-| `R2_ACCOUNT_ID` | `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` | Cloudflare account id |
-| `R2_ACCESS_KEY_ID` | `...` | R2 API token access key |
-| `R2_SECRET_ACCESS_KEY` | `...` | R2 API token secret |
-| `R2_BUCKET` | `blog-images` | Target bucket |
-| `R2_PUBLIC_BASE_URL` | `https://img.example.com` | Public bucket/CDN domain (no trailing slash) |
-| `R2_REGION` | `auto` | Optional, defaults to `auto` |
-| `R2_MAX_UPLOAD_SIZE_MB` | `15` | Optional, defaults to `15` |
-| `R2_UPLOAD_BYPASS_AUTH` | `1` | Optional for local/dev only; skip Netlify Identity token verification |
+| `TWIKOO_ENV_ID` | Yes | Twikoo env id or service URL |
+| `TWIKOO_REGION` | No | Region for some Tencent Cloud deployments |
 
-`coverImage` in post frontmatter now supports both local Astro-managed images and external URLs (e.g. R2 CDN links).
+NetEase music panel:
 
-## 💬 Twikoo Comments
-
-This project now supports Twikoo on post detail pages.
-
-Add these environment variables before build/deploy:
-
-| Variable | Example | Notes |
+| Variable | Required | Notes |
 | :-- | :-- | :-- |
-| `TWIKOO_ENV_ID` | `https://comments.example.com` | Required. Use your Twikoo `envId` or deployed service URL |
-| `TWIKOO_REGION` | `ap-guangzhou` | Optional. Only needed for some Tencent Cloud setups |
+| `NETEASE_PLAYLIST_ID` | Yes | Source playlist id |
+| `NETEASE_COOKIE` | Yes, unless split fields are used | Full NetEase cookie |
+| `NETEASE_MUSIC_U` | Optional | Cookie split field fallback |
+| `NETEASE_CSRF` | Optional | Cookie split field fallback |
+| `NETEASE_NMTID` | Optional | Cookie split field fallback |
+| `NETEASE_TOP_K` | No | Number of tracks to show, defaults to 8 |
+| `NETEASE_REFRESH_INTERVAL_HOURS` | No | Login refresh interval, defaults to 12 |
 
-## 👀 Want to learn more?
+The music integration writes fallback cache files under `.cache/` during runtime.
 
-Check out [Astro documentation](https://docs.astro.build).
+## Commands
+
+Use pnpm from the repository root:
+
+| Command | Action |
+| :-- | :-- |
+| `pnpm install` | Install dependencies |
+| `pnpm run dev` | Start the local dev server |
+| `pnpm run build` | Run `astro check` and build the production site |
+| `pnpm run preview` | Preview the production build locally |
+| `pnpm run astro -- --help` | Show Astro CLI help |
+
+## Deployment
+
+The Astro config uses `@astrojs/netlify`, with the production site set to `https://m0ne.top`.
+
+Before deploying, configure the Twikoo and NetEase environment variables in the hosting provider. `public/_headers` also sets cache headers for `/api/music/random.json`.
+
+## Credits
+
+- Original template: [Devolio](https://devolio.devaradise.com)
+- Creator: [devaradise](https://devaradise.com/)
+- This repository is a personal modification and continuation of that template for `m0ne.top`.
