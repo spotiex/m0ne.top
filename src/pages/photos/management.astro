@@ -1,0 +1,266 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { HOME_GALLERY_ITEMS, SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+
+const isDev = import.meta.env.DEV;
+const recentItems = HOME_GALLERY_ITEMS.slice(-6).reverse();
+const existingPhotoSources = HOME_GALLERY_ITEMS.map((item) => item.src);
+---
+
+<BaseLayout title={`Manage Photos - ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
+	<div class='container max-w-5xl'>
+		<div class='mb-8'>
+			<h1 class='text-3xl md:text-4xl font-bold mb-2'>本地图廊录入</h1>
+			<p class='text-zinc-700 dark:text-zinc-300'>
+				填写 `src / alt / title / date / description / tags`，确认图片预览无误后保存到 `src/consts.ts`。
+			</p>
+		</div>
+
+		{
+			!isDev ? (
+				<div class='rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'>
+					这个工具页仅在本地开发环境可写入使用。
+				</div>
+			) : (
+				<div class='grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]'>
+					<div class='space-y-6'>
+						<section class='rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900'>
+							<form id='photo-manage-form' class='space-y-4'>
+								<label class='block'>
+									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>图片 URL `src`</span>
+									<input
+										id='photo-src'
+										name='src'
+										type='url'
+										required
+										placeholder='https://img.example.com/2026/04/demo.jpg'
+										class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+									/>
+								</label>
+
+								<label class='block'>
+									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>替代文本 `alt`</span>
+									<input
+										id='photo-alt'
+										name='alt'
+										type='text'
+										placeholder='例如：北京夜景'
+										class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+									/>
+								</label>
+
+								<label class='block'>
+									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>标题 `title`</span>
+									<input
+										id='photo-title'
+										name='title'
+										type='text'
+										placeholder='例如：景山公园'
+									class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+									/>
+								</label>
+
+								<label class='block'>
+									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>日期 `date`</span>
+									<input
+										id='photo-date'
+										name='date'
+										type='text'
+										placeholder='例如：2026/04/27'
+										class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+									/>
+								</label>
+
+								<label class='block'>
+									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>描述 `description`</span>
+									<textarea
+										id='photo-description'
+										name='description'
+										rows='3'
+										placeholder='例如：春天傍晚的迎泽大桥，风很轻。'
+										class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+									></textarea>
+								</label>
+
+								<label class='block'>
+									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>标签 `tags`</span>
+									<input
+										id='photo-tags'
+										name='tags'
+										type='text'
+										placeholder='用逗号分隔，例如：旅行, 建筑, 人物'
+										class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+									/>
+								</label>
+
+								<div class='flex items-center gap-3 pt-2'>
+									<button
+										type='submit'
+										class='rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300'
+									>
+										保存到 consts.ts
+									</button>
+									<p id='photo-manage-status' class='text-sm text-zinc-500 dark:text-zinc-400'></p>
+								</div>
+								<p id='photo-duplicate-hint' class='hidden text-sm text-amber-600 dark:text-amber-300'></p>
+							</form>
+						</section>
+
+						<section class='rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900'>
+							<h2 class='mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100'>最近条目</h2>
+							<ul class='grid gap-3 sm:grid-cols-2'>
+								{
+									recentItems.map((item) => (
+										<li class='rounded-xl border border-zinc-200 px-3 py-3 dark:border-zinc-700'>
+											<p class='truncate text-sm font-medium text-zinc-900 dark:text-zinc-100'>{item.title || item.alt || item.src}</p>
+											<p class='mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400'>{item.src}</p>
+										</li>
+									))
+								}
+							</ul>
+						</section>
+					</div>
+
+					<aside>
+						<section class='rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900'>
+							<h2 class='mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100'>图片预览</h2>
+							<div id='photo-preview-empty' class='rounded-xl border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400'>
+								输入图片 URL 后会在这里实时预览。
+							</div>
+							<div id='photo-preview-wrap' class='hidden'>
+								<img id='photo-preview-image' src='' alt='' class='w-full rounded-xl border border-zinc-200 object-cover dark:border-zinc-700' />
+								<p id='photo-preview-meta' class='mt-3 text-sm text-zinc-600 dark:text-zinc-300'></p>
+							</div>
+						</section>
+					</aside>
+				</div>
+			)
+		}
+	</div>
+</BaseLayout>
+
+{
+	isDev && (
+		<script is:inline define:vars={{ existingPhotoSources }}>
+			const form = document.getElementById('photo-manage-form');
+			const srcInput = document.getElementById('photo-src');
+			const altInput = document.getElementById('photo-alt');
+			const titleInput = document.getElementById('photo-title');
+			const dateInput = document.getElementById('photo-date');
+			const descriptionInput = document.getElementById('photo-description');
+			const tagsInput = document.getElementById('photo-tags');
+			const statusNode = document.getElementById('photo-manage-status');
+			const duplicateHint = document.getElementById('photo-duplicate-hint');
+			const previewEmpty = document.getElementById('photo-preview-empty');
+			const previewWrap = document.getElementById('photo-preview-wrap');
+			const previewImage = document.getElementById('photo-preview-image');
+			const previewMeta = document.getElementById('photo-preview-meta');
+			const normalizedExistingSources = Array.isArray(existingPhotoSources)
+				? existingPhotoSources.map((value) => String(value).trim())
+				: [];
+
+			const syncDuplicateHint = () => {
+				if (!(srcInput instanceof HTMLInputElement) || !(duplicateHint instanceof HTMLElement)) return false;
+				const currentSrc = srcInput.value.trim();
+				const isDuplicate = currentSrc !== '' && normalizedExistingSources.includes(currentSrc);
+
+				duplicateHint.classList.toggle('hidden', !isDuplicate);
+				duplicateHint.textContent = isDuplicate ? '这个图片 URL 已经存在于 HOME_GALLERY_ITEMS 中。' : '';
+				srcInput.setAttribute('aria-invalid', isDuplicate ? 'true' : 'false');
+
+				return isDuplicate;
+			};
+
+			const syncPreview = () => {
+				if (!(previewImage instanceof HTMLImageElement) || !(previewMeta instanceof HTMLElement)) return;
+				const src = srcInput instanceof HTMLInputElement ? srcInput.value.trim() : '';
+				const alt = altInput instanceof HTMLInputElement ? altInput.value.trim() : '';
+				const title = titleInput instanceof HTMLInputElement ? titleInput.value.trim() : '';
+				const date = dateInput instanceof HTMLInputElement ? dateInput.value.trim() : '';
+				const description = descriptionInput instanceof HTMLTextAreaElement ? descriptionInput.value.trim() : '';
+				const tags = tagsInput instanceof HTMLInputElement ? tagsInput.value.trim() : '';
+
+				if (!src) {
+					previewWrap?.classList.add('hidden');
+					previewEmpty?.classList.remove('hidden');
+					previewImage.removeAttribute('src');
+					previewMeta.textContent = '';
+					return;
+				}
+
+				previewWrap?.classList.remove('hidden');
+				previewEmpty?.classList.add('hidden');
+				previewImage.src = src;
+				previewImage.alt = alt || title || 'preview';
+				previewMeta.textContent = [title || '(无标题)', date || '(无日期)', alt || '(无 alt)', tags || '(无 tags)', description || '(无描述)'].join(' / ');
+			};
+
+			[srcInput, altInput, titleInput, dateInput, descriptionInput, tagsInput].forEach((node) => {
+				node?.addEventListener('input', () => {
+					syncPreview();
+					syncDuplicateHint();
+				});
+			});
+
+			previewImage?.addEventListener('error', () => {
+				if (statusNode instanceof HTMLElement) {
+					statusNode.textContent = '图片预览加载失败，请检查 URL。';
+				}
+			});
+
+			form?.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				if (!(srcInput instanceof HTMLInputElement) || !(altInput instanceof HTMLInputElement) || !(titleInput instanceof HTMLInputElement) || !(dateInput instanceof HTMLInputElement) || !(descriptionInput instanceof HTMLTextAreaElement) || !(tagsInput instanceof HTMLInputElement) || !(statusNode instanceof HTMLElement)) {
+					return;
+				}
+
+				statusNode.textContent = '保存中...';
+
+				if (syncDuplicateHint()) {
+					statusNode.textContent = '检测到重复 URL，已阻止保存。';
+					return;
+				}
+
+				const payload = {
+					src: srcInput.value.trim(),
+					alt: altInput.value.trim(),
+					title: titleInput.value.trim(),
+					date: dateInput.value.trim(),
+					description: descriptionInput.value.trim(),
+					tags: tagsInput.value
+						.split(/[,，]/)
+						.map((tag) => tag.trim())
+						.filter(Boolean)
+				};
+
+				try {
+					const response = await fetch('/api/photos/add.json', {
+						method: 'POST',
+						headers: {
+							'content-type': 'application/json'
+						},
+						body: JSON.stringify(payload)
+					});
+
+					const result = await response.json();
+
+					if (!response.ok) {
+						throw new Error(result?.error || '保存失败。');
+					}
+
+					statusNode.textContent = '已写入 consts.ts，页面即将刷新。';
+					form.reset();
+					syncPreview();
+					window.setTimeout(() => {
+						window.location.reload();
+					}, 700);
+				} catch (error) {
+					statusNode.textContent = error instanceof Error ? error.message : '保存失败。';
+				}
+			});
+
+			syncPreview();
+			syncDuplicateHint();
+		</script>
+	)
+}

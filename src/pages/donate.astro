@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+---
+
+<BaseLayout title={`Donate - ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
+	<div class='container'>
+		<main class='mx-auto max-w-2xl py-12'>
+			<div class='rounded-3xl border border-zinc-200 bg-white px-6 py-8 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:px-10 md:py-10'>
+				<h1 class='text-3xl font-bold text-zinc-900 dark:text-zinc-100'>请我喝杯绿茶</h1>
+				<p class='mt-4 text-sm leading-7 text-zinc-600 dark:text-zinc-300'>
+					内容本身是免费开放的，不必破费。如果这些文字或照片刚好对你有一点帮助，愿意支持的话，可以请我喝杯绿茶。
+				</p>
+				<p class='mt-2 text-sm leading-7 text-zinc-500 dark:text-zinc-400'>
+					微信扫码即可，感谢你的心意。
+				</p>
+
+				<div class='mt-8 flex justify-center'>
+					<img
+						src='https://img.m0ne.de5.net/i/2026/04/27/7r5wa4-mpce.jpg'
+						alt='微信赞赏码'
+						loading='lazy'
+						class='w-full max-w-sm rounded-2xl border border-zinc-200 object-contain dark:border-zinc-700'
+					/>
+				</div>
+			</div>
+		</main>
+	</div>
+</BaseLayout>

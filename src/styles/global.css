@@ -7,3 +7,78 @@
 		font-size: 0.875rem;
 	}
 }
+
+@layer components {
+	.img-center,
+	.img-left,
+	.img-right {
+		display: block;
+		height: auto;
+		margin-top: 1.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.img-center {
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	.img-left {
+		margin-left: 0;
+		margin-right: auto;
+	}
+
+	.img-right {
+		margin-left: auto;
+		margin-right: 0;
+	}
+
+	.img-40 {
+		width: 40%;
+	}
+
+	.img-50 {
+		width: 50%;
+	}
+
+	.img-70 {
+		width: 70%;
+	}
+
+	.img-row-2,
+	.img-row-3 {
+		display: grid;
+		gap: 1rem;
+		align-items: start;
+		margin: 1.5rem 0;
+	}
+
+	.img-row-2 {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.img-row-3 {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.img-row-2 img,
+	.img-row-3 img {
+		display: block;
+		width: 100%;
+		height: auto;
+		margin: 0;
+	}
+
+	@media (max-width: 768px) {
+		.img-40,
+		.img-50,
+		.img-70 {
+			width: 100%;
+		}
+
+		.img-row-2,
+		.img-row-3 {
+			grid-template-columns: 1fr;
+		}
+	}
+}

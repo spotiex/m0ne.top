@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getNeteaseTopTracks } from '@src/lib/music/netease';
 
-export const prerender = false;
+export const prerender = true;
 
 // 从配置歌单返回一组可播放的随机歌曲。
 export const GET: APIRoute = async ({ url }) => {
@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ url }) => {
     status: 200,
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'no-store',
+      'cache-control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
     },
   });
 };

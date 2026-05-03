@@ -4,6 +4,24 @@ import Prose from '../../components/Prose.astro';
 import { HOME_GALLERY_ITEMS, SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
 const galleryTags = ['全部', ...new Set(HOME_GALLERY_ITEMS.flatMap((item) => item.tags ?? []))];
+
+const formatPhotoDate = (value?: string) => {
+	if (!value) return '';
+	const normalized = value.trim().replace(/[.]/g, '-').replace(/\//g, '-');
+	const parts = normalized.split('-').map((part) => part.trim()).filter(Boolean);
+	if (parts.length < 3) return value;
+
+	const [year, month, day] = parts;
+	const numericYear = Number(year);
+	const numericMonth = Number(month);
+	const numericDay = Number(day);
+
+	if (!Number.isFinite(numericYear) || !Number.isFinite(numericMonth) || !Number.isFinite(numericDay)) {
+		return value;
+	}
+
+	return `${numericYear}年${numericMonth}月${numericDay}日`;
+};
 ---
 
 <BaseLayout title={`Photos - ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
@@ -38,6 +56,21 @@ const galleryTags = ['全部', ...new Set(HOME_GALLERY_ITEMS.flatMap((item) => i
 			}
 		</div>
 
+		<div class='mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+			<p id='photo-pagination-summary' class='text-sm text-zinc-600 dark:text-zinc-300'>共 0 张图片</p>
+			<label class='flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300'>
+				<span>每页显示</span>
+				<select
+					id='photo-page-size'
+					class='rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
+				>
+					<option value='12' selected>12</option>
+					<option value='24'>24</option>
+					<option value='36'>36</option>
+				</select>
+			</label>
+		</div>
+
 		
 		<div class='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4' id='photo-grid'>
 			{
@@ -56,30 +89,48 @@ const galleryTags = ['全部', ...new Set(HOME_GALLERY_ITEMS.flatMap((item) => i
 							data-photo-tags={(item.tags ?? []).join('|')}
 							aria-label={`查看大图 ${item.title || item.alt || `#${index + 1}`}`}
 						>
-							<img src={item.src} alt={item.alt} loading='lazy' class='w-full aspect-[4/3] object-cover' />
-						</button>
-						{(item.title || (item.tags ?? []).length > 0) && (
-							<figcaption class='flex flex-wrap items-center gap-2 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300'>
-								{item.title && <span>{item.title}</span>}
+							<div class='photo-trigger__media'>
+								<img src={item.src} alt={item.alt} loading='lazy' class='w-full aspect-[4/3] object-cover' />
 								{
-									(item.tags ?? []).length > 0 && (
-										<div class='ml-auto flex flex-wrap justify-end gap-1.5'>
-											{
-												(item.tags ?? []).map((tag) => (
-													<span class='rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'>
-														{tag}
-													</span>
-												))
-											}
-										</div>
+									item.description && (
+										<span class='photo-hover-note'>
+											{item.description}
+										</span>
 									)
 								}
+							</div>
+						</button>
+						{(item.title || item.date || (item.tags ?? []).length > 0) && (
+							<figcaption class='px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300'>
+								<div class='flex flex-wrap items-start gap-2'>
+									<div class='min-w-0'>
+										{item.title && <span>{item.title}</span>}
+										{
+											item.date && <span class='ml-2 text-xs text-zinc-500 dark:text-zinc-400'>{formatPhotoDate(item.date)}</span>
+										}
+									</div>
+									{
+										(item.tags ?? []).length > 0 && (
+											<div class='ml-auto flex flex-wrap justify-end gap-1.5'>
+												{
+													(item.tags ?? []).map((tag) => (
+														<span class='rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'>
+															{tag}
+														</span>
+													))
+												}
+											</div>
+										)
+									}
+								</div>
 							</figcaption>
 						)}
 					</figure>
 				))
 			}
 		</div>
+
+		<div id='photo-pagination' class='mt-8 flex flex-wrap items-center justify-center gap-2'></div>
 	</div>
 
 	<div id='photo-lightbox' class='photo-lightbox' aria-hidden='true' hidden>
@@ -100,11 +151,81 @@ const galleryTags = ['全部', ...new Set(HOME_GALLERY_ITEMS.flatMap((item) => i
 	const initPhotoFilters = () => {
 		const filterButtons = Array.from(document.querySelectorAll('[data-photo-filter]'));
 		const photoCards = Array.from(document.querySelectorAll('.photo-card'));
+		const pageSizeSelect = document.getElementById('photo-page-size');
+		const pagination = document.getElementById('photo-pagination');
+		const summary = document.getElementById('photo-pagination-summary');
 		if (filterButtons.length === 0 || photoCards.length === 0) return;
 		if (document.body.dataset.photoFilterBound === '1') return;
 		document.body.dataset.photoFilterBound = '1';
 
-		const setFilter = (activeTag) => {
+		let activeTag = '全部';
+		let currentPage = 1;
+		let pageSize = pageSizeSelect instanceof HTMLSelectElement ? Number(pageSizeSelect.value || '12') : 12;
+
+		const updateVisibleCards = () => {
+			const filteredCards = photoCards.filter((card) => {
+				const rawTags = card.getAttribute('data-photo-tags') || '';
+				const tags = rawTags ? rawTags.split('|') : [];
+				return activeTag === '全部' || tags.includes(activeTag);
+			});
+
+			const totalItems = filteredCards.length;
+			const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+			if (currentPage > totalPages) currentPage = totalPages;
+			const startIndex = (currentPage - 1) * pageSize;
+			const endIndex = startIndex + pageSize;
+
+			photoCards.forEach((card) => {
+				card.hidden = true;
+			});
+
+			filteredCards.forEach((card, index) => {
+				card.hidden = !(index >= startIndex && index < endIndex);
+			});
+
+			if (summary instanceof HTMLElement) {
+				summary.textContent = `共 ${totalItems} 张图片，第 ${currentPage} / ${totalPages} 页`;
+			}
+
+			if (!(pagination instanceof HTMLElement)) return;
+
+			const renderButton = (label, nextPage, disabled = false, isActive = false) => `
+				<button
+					type="button"
+					class="photo-page-btn rounded-full border px-3 py-1.5 text-sm transition-colors ${
+						isActive
+							? 'border-zinc-700 bg-zinc-700 text-white dark:border-zinc-200 dark:bg-zinc-200 dark:text-zinc-900'
+							: 'border-zinc-300 text-zinc-700 dark:border-zinc-700 dark:text-zinc-300'
+					} ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:border-zinc-500 dark:hover:border-zinc-500'}"
+					data-photo-page="${nextPage}"
+					${disabled ? 'disabled' : ''}
+				>
+					${label}
+				</button>
+			`;
+
+			const pageButtons = [];
+			pageButtons.push(renderButton('上一页', currentPage - 1, currentPage === 1));
+			for (let page = 1; page <= totalPages; page += 1) {
+				pageButtons.push(renderButton(String(page), page, false, page === currentPage));
+			}
+			pageButtons.push(renderButton('下一页', currentPage + 1, currentPage === totalPages));
+			pagination.innerHTML = pageButtons.join('');
+
+			pagination.querySelectorAll('[data-photo-page]').forEach((button) => {
+				button.addEventListener('click', () => {
+					const nextPage = Number(button.getAttribute('data-photo-page') || '1');
+					if (!Number.isFinite(nextPage)) return;
+					currentPage = Math.min(Math.max(1, nextPage), totalPages);
+					updateVisibleCards();
+				});
+			});
+		};
+
+		const setFilter = (nextTag) => {
+			activeTag = nextTag;
+			currentPage = 1;
+
 			filterButtons.forEach((button) => {
 				const isActive = button.getAttribute('data-photo-filter') === activeTag;
 				button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
@@ -121,19 +242,20 @@ const galleryTags = ['全部', ...new Set(HOME_GALLERY_ITEMS.flatMap((item) => i
 				button.classList.toggle('dark:text-zinc-300', !isActive);
 				button.classList.toggle('dark:hover:border-zinc-500', !isActive);
 			});
-
-			photoCards.forEach((card) => {
-				const rawTags = card.getAttribute('data-photo-tags') || '';
-				const tags = rawTags ? rawTags.split('|') : [];
-				const visible = activeTag === '全部' || tags.includes(activeTag);
-				card.hidden = !visible;
-			});
+			updateVisibleCards();
 		};
 
 		filterButtons.forEach((button) => {
 			button.addEventListener('click', () => {
 				setFilter(button.getAttribute('data-photo-filter') || '全部');
 			});
+		});
+
+		pageSizeSelect?.addEventListener('change', () => {
+			if (!(pageSizeSelect instanceof HTMLSelectElement)) return;
+			pageSize = Number(pageSizeSelect.value || '12');
+			currentPage = 1;
+			updateVisibleCards();
 		});
 
 		setFilter('全部');
@@ -241,6 +363,35 @@ const galleryTags = ['全部', ...new Set(HOME_GALLERY_ITEMS.flatMap((item) => i
 		padding: 0;
 		background: transparent;
 		cursor: zoom-in;
+	}
+
+	.photo-trigger__media {
+		position: relative;
+	}
+
+	.photo-hover-note {
+		position: absolute;
+		left: 0.75rem;
+		right: 0.75rem;
+		bottom: 0.75rem;
+		opacity: 0;
+		transform: translateY(6px);
+		border-radius: 0.85rem;
+		background: rgb(24 24 27 / 0.82);
+		color: rgb(244 244 245);
+		padding: 0.55rem 0.7rem;
+		font-size: 0.78rem;
+		line-height: 1.55;
+		text-align: left;
+		backdrop-filter: blur(6px);
+		transition: opacity 160ms ease, transform 160ms ease;
+		pointer-events: none;
+	}
+
+	.photo-trigger:hover .photo-hover-note,
+	.photo-trigger:focus-visible .photo-hover-note {
+		opacity: 1;
+		transform: translateY(0);
 	}
 
 	.photo-lightbox {

@@ -6,8 +6,18 @@ interface Props {
 }
 
 const { photos = [] } = Astro.props;
-const topRowPhotos = photos.filter((_, index) => index % 2 === 0);
-const bottomRowPhotos = photos.filter((_, index) => index % 2 === 1);
+const shuffle = <T,>(items: T[]) => {
+	const next = [...items];
+	for (let index = next.length - 1; index > 0; index -= 1) {
+		const randomIndex = Math.floor(Math.random() * (index + 1));
+		[next[index], next[randomIndex]] = [next[randomIndex], next[index]];
+	}
+	return next;
+};
+
+const randomizedPhotos = shuffle(photos);
+const topRowPhotos = randomizedPhotos.filter((_, index) => index % 2 === 0);
+const bottomRowPhotos = randomizedPhotos.filter((_, index) => index % 2 === 1);
 const topRowLoopPhotos = topRowPhotos.length > 0 ? [...topRowPhotos, ...topRowPhotos] : [];
 const bottomRowLoopPhotos = bottomRowPhotos.length > 0 ? [...bottomRowPhotos, ...bottomRowPhotos] : [];
 ---
@@ -73,7 +83,7 @@ const bottomRowLoopPhotos = bottomRowPhotos.length > 0 ? [...bottomRowPhotos, ..
 		display: flex;
 		gap: 0.9rem;
 		width: max-content;
-		animation: gallery-scroll 26.67s linear infinite;
+		animation: gallery-scroll 33.34s linear infinite;
 	}
 
 	.gallery-marquee:hover .gallery-track {

@@ -29,3 +29,8 @@ pnpm-debug.log*
 
 # .claude
 .claude/
+
+# Trellis / AI assistant workspace files
+.agents/
+.codex/
+AGENTS.md
