@@ -141,6 +141,12 @@ const firstTrack = tracks[0];
 
 		let currentIndex = 0;
 		let lastSavedAt = 0;
+		const syncCdSpin = (isRunning) => {
+			if (!cdImage) return;
+			cdImage.classList.add('is-spinning');
+			cdImage.style.animationPlayState = isRunning ? 'running' : 'paused';
+		};
+
 		const emitStateChange = () => {
 			const detail = getState();
 			window.dispatchEvent(new CustomEvent('global-music-player:state', { detail }));
@@ -471,11 +477,11 @@ const firstTrack = tracks[0];
 		audio?.addEventListener('loadedmetadata', saveState);
 		audio?.addEventListener('volumechange', saveState);
 		audio?.addEventListener('play', () => {
-			cdImage?.classList.add('is-spinning');
+			syncCdSpin(true);
 			saveState();
 		});
 		audio?.addEventListener('pause', () => {
-			cdImage?.classList.remove('is-spinning');
+			syncCdSpin(false);
 			saveState();
 		});
 

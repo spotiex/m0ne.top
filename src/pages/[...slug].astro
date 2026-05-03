@@ -7,7 +7,7 @@ import FormattedDate from '../components/FormattedDate.astro';
 import AboutTheAuthor from '../components/widgets/AboutTheAuthor.astro';
 import TableOfContent from '../components/widgets/TableOfContent.astro';
 import TwikooComments from '../components/TwikooComments.astro';
-import { slugify } from '../utils';
+import { getTagHref } from '../lib/tags';
 import { render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -53,7 +53,7 @@ const coverImageUrl = typeof coverImage === 'string' ? coverImage : coverImage?.
                           text-sm text-zinc-700 dark:text-zinc-300 no-underline px-2 py-0.5
                           transition-all duration-700
                         hover:border-zinc-700 dark:hover:border-zinc-300'
-                        href={`/tags/${slugify(tag)}`}>
+                        href={getTagHref(tag, 'blog')}>
                         {tag}
                       </a>
                     ))

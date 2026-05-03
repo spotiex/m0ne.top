@@ -1,0 +1,156 @@
+---
+import BaseLayout from '@src/layouts/BaseLayout.astro';
+import PostsByYear from '@src/components/PostsByYear.astro';
+import ProjectList from '@src/components/ProjectList.astro';
+import { formatPhotoDate } from '@src/lib/photoDate';
+import { getTaggedContent, getTagHref, tagSectionMeta, tagSectionPaths, type TagSectionKey } from '@src/lib/tags';
+import { unslugify } from '@src/utils';
+
+export const getStaticPaths = async () => {
+	const { sections } = await getTaggedContent();
+
+	return sections.flatMap((section) =>
+		section.tags.map((tag) => ({
+			params: {
+				tag: tag.value,
+				section: tagSectionPaths[section.key]
+			},
+			props: {
+				sectionKey: section.key
+			}
+		}))
+	);
+};
+
+interface Props {
+	sectionKey: TagSectionKey;
+}
+
+const { tag = '' } = Astro.params;
+const { sectionKey } = Astro.props as Props;
+const { blogPosts, fragments, projects, photos, allTags } = await getTaggedContent(tag);
+const sectionMeta = tagSectionMeta.find((section) => section.key === sectionKey) ?? tagSectionMeta[0];
+const tagLabel = allTags.find((entry) => entry.value === tag)?.label ?? unslugify(tag);
+const title = `检索标签：${tagLabel}`;
+const description = `站内「${sectionMeta.title}」中带有「${tagLabel}」标签的内容。`;
+const sectionIndexHref =
+	sectionKey === 'blog' ? '/posts/' : sectionKey === 'fragments' ? '/fragments/' : sectionKey === 'projects' ? '/projects/' : '/photos/';
+const sectionIndexLabel =
+	sectionKey === 'blog'
+		? 'All posts »'
+		: sectionKey === 'fragments'
+			? 'All fragments »'
+			: sectionKey === 'projects'
+				? 'All projects »'
+				: 'All photos »';
+
+---
+
+<BaseLayout title={title} description={description}>
+	<div class='container'>
+		<div class='mb-10'>
+			<h1 class='text-3xl font-bold mb-2'>{title}</h1>
+			<p class='leading-7 text-zinc-700 dark:text-zinc-300'>{description}</p>
+		</div>
+
+		<section class='scroll-mt-24'>
+			<div class='mb-3 flex justify-between gap-2 border-b dark:border-b-zinc-700'>
+				<h2 class='mb-3 text-lg font-bold'>{sectionMeta.title}</h2>
+				<a href={sectionIndexHref} class='inline-block py-2 underline dark:prose-invert'>{sectionIndexLabel}</a>
+			</div>
+
+			{sectionKey === 'blog' && <PostsByYear posts={blogPosts} />}
+
+			{
+				sectionKey === 'fragments' && (
+					<div class='grid gap-3 md:grid-cols-2'>
+						{fragments.map((fragment) => (
+							<a
+								class='rounded-lg border border-zinc-200 p-4 no-underline transition hover:border-zinc-500 dark:border-zinc-700 dark:hover:border-zinc-300'
+								href={`/fragments/${fragment.id}/`}
+							>
+								<h3 class='font-semibold text-zinc-900 dark:text-zinc-100'>{fragment.data.title}</h3>
+								<p class='mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300'>{fragment.data.description}</p>
+								<time class='mt-3 block text-xs text-zinc-500 dark:text-zinc-400'>{fragment.data.pubDate.toLocaleDateString('zh-CN')}</time>
+							</a>
+						))}
+					</div>
+				)
+			}
+
+			{sectionKey === 'projects' && <ProjectList projects={projects} />}
+
+			{
+				sectionKey === 'photos' && (
+					<div class='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+						{photos.map((photo) => (
+							<figure class='photo-card overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900'>
+								<div class='photo-trigger block w-full'>
+									<div class='photo-trigger__media'>
+										<img src={photo.src} alt={photo.alt} loading='lazy' class='aspect-[4/3] w-full object-cover' />
+										{photo.description && <span class='photo-hover-note'>{photo.description}</span>}
+									</div>
+								</div>
+								{(photo.title || photo.date || (photo.tags ?? []).length > 0) && (
+									<figcaption class='px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300'>
+										<div class='flex flex-wrap items-start gap-2'>
+											<div class='min-w-0'>
+												{photo.title && <span>{photo.title}</span>}
+												{photo.date && <span class='ml-2 text-xs text-zinc-500 dark:text-zinc-400'>{formatPhotoDate(photo.date)}</span>}
+											</div>
+											{(photo.tags ?? []).length > 0 && (
+												<div class='ml-auto flex flex-wrap justify-end gap-1.5'>
+													{(photo.tags ?? []).map((photoTag) => (
+														<a
+															class='rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 no-underline transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+															href={getTagHref(photoTag, 'photos')}
+														>
+															{photoTag}
+														</a>
+													))}
+												</div>
+											)}
+										</div>
+									</figcaption>
+								)}
+							</figure>
+						))}
+					</div>
+				)
+			}
+		</section>
+	</div>
+</BaseLayout>
+
+<style>
+	.photo-trigger__media {
+		position: relative;
+	}
+
+	.photo-hover-note {
+		position: absolute;
+		left: 0.75rem;
+		right: 0.75rem;
+		bottom: 0.75rem;
+		opacity: 0;
+		transform: translateY(6px);
+		border-radius: 0.85rem;
+		background: rgb(24 24 27 / 0.82);
+		color: rgb(244 244 245);
+		padding: 0.55rem 0.7rem;
+		font-size: 0.78rem;
+		line-height: 1.55;
+		text-align: left;
+		backdrop-filter: blur(6px);
+		transition:
+			opacity 160ms ease,
+			transform 160ms ease;
+		pointer-events: none;
+	}
+
+	.photo-trigger:hover .photo-hover-note,
+	.photo-trigger:focus-within .photo-hover-note {
+		opacity: 1;
+		transform: translateY(0);
+	}
+</style>

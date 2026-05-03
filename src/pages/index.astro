@@ -1,6 +1,5 @@
 ---
 import { SITE_TITLE, SITE_TAGLINE, SITE_DESCRIPTION, GITHUB_PROFILE_URL } from '../consts';
-import { HOME_GALLERY_ITEMS } from '../consts';
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import type { CollectionEntry } from 'astro:content';
@@ -12,18 +11,26 @@ import MusicPanel from '../components/MusicPanel.astro';
 import PhotoGalleryStrip from '../components/PhotoGalleryStrip.astro';
 import NotesPanel from '../components/NotesPanel.astro';
 import { getNeteaseTopTracks } from '@src/lib/music/netease';
+import SiteStats from '../components/SiteStats.astro';
+import { buildSiteStats } from '../lib/contentStats';
+import { getGalleryItems } from '../lib/server/gallery';
 
 type BlogPost = CollectionEntry<'blog'>;
 type FragmentPost = CollectionEntry<'fragments'>;
 
 const top6Projects = projects.slice(0, 6);
-const posts = (await getCollection('blog'))
-	.sort((a: BlogPost, b: BlogPost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-	.slice(0, 5);
+const allPosts = (await getCollection('blog')).sort((a: BlogPost, b: BlogPost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const posts = allPosts.slice(0, 5);
 const fragments = (await getCollection('fragments')).sort(
 	(a: FragmentPost, b: FragmentPost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
+const galleryItems = await getGalleryItems();
 const musicTracks = await getNeteaseTopTracks();
+const siteStats = buildSiteStats({
+	posts: allPosts,
+	fragments,
+	photos: galleryItems
+});
 const heroLines = [
 	'工科硕士在读',
 	'时而热情，时而懒惰',
@@ -54,24 +61,24 @@ const heroLines = [
 							我会在 <a href='https://m0ne.top' target='_blank'>m0ne.top</a> 上记录大的小的，有的没的，创作内容包括长文生活感悟，计算机前沿技术学习，生活随拍随写不等，同样欢迎你加入掌握自我生活的队伍，一起来写点什么吧！
 						</p>
 						<p>
-							这是一个以 <a href='https://devaradise.com/'>devaradise</a> 为模板修改的博客主页。前端技术栈为 Astro 和 Tailwind CSS，代码通过
-							<a
-								href='https://docs.astro.build/en/guides/deploy/netlify/'
+							这是一个以 <a href='https://devaradise.com/'>devaradise</a> 为模板修改的博客主页。前端技术栈为 Astro 和 Tailwind CSS，
+							<a href="https://twikoo.js.org/intro.html" target= '_blank' rel='noopener noreferrer'> Twikoo </a>提供评论系统支持，代码通过
+							<a href='https://docs.astro.build/en/guides/deploy/netlify/' target='_blank' rel='nofollow noopener'>Netlify</a> 与 <a
+								href={GITHUB_PROFILE_URL}
 								target='_blank'
-								rel='nofollow noopener'>Netlify</a
-							> 与 <a href={GITHUB_PROFILE_URL} target='_blank' rel='noopener noreferrer'>GitHub</a> 托管与部署。
-						</p>
-						<p>
-							若使用 <a
-								href='https://docs.astro.build/en/guides/deploy/vercel/'
+								rel='noopener noreferrer'>GitHub</a
+							> 托管与部署。若使用 <a href='https://docs.astro.build/en/guides/deploy/vercel/' target='_blank' rel='nofollow noopener'>Vercel</a>, <a
+								href='https://pages.cloudflare.com/'
 								target='_blank'
-								rel='nofollow noopener'>Vercel</a
-							>, <a href='https://pages.cloudflare.com/' target='_blank' rel='nofollow noopener'>Cloudflare Pages</a
+								rel='nofollow noopener'>Cloudflare Pages</a
 							>，请点击获取相关文档链接和部署教程。
 						</p>
 					</div>
 				</Prose>
 			</div>
+		</div>
+		<div class='mb-12'>
+			<SiteStats stats={siteStats} />
 		</div>
 		<main>
 			<div class='mt-6 mb-12'>
@@ -88,7 +95,7 @@ const heroLines = [
 				<NotesPanel notes={fragments} />
 			</div>
 			<div class='mb-12'>
-				<PhotoGalleryStrip photos={HOME_GALLERY_ITEMS} />
+				<PhotoGalleryStrip photos={galleryItems} />
 			</div>
 			<div>
 				<div class='flex justify-between gap-2 mb-1'>

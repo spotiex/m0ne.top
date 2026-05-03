@@ -1,39 +1,101 @@
 ---
-import type { CollectionEntry } from 'astro:content';
-import { getCollection } from 'astro:content';
 import BaseLayout from '@src/layouts/BaseLayout.astro';
-import { slugify, unslugify } from '@src/utils';
 import PostsByYear from '@src/components/PostsByYear.astro';
+import ProjectList from '@src/components/ProjectList.astro';
+import { getTaggedContent, tagSectionAnchors } from '@src/lib/tags';
+import { unslugify } from '@src/utils';
 
-type BlogPost = CollectionEntry<'blog'>;
 export const getStaticPaths = async () => {
-	const allPosts: BlogPost[] = await getCollection('blog');
-	return [
-		...new Set(
-			allPosts
-				.map((post) => post.data.tags)
-				.flat()
-				.filter((tag) => !!tag)
-		)
-	].map((tag) => ({ params: { tag: slugify(tag || '') } }))
-	 .filter((entry) => !!entry.params.tag);
+	const { allTags } = await getTaggedContent();
+	return allTags.map((tag) => ({ params: { tag: tag.value } }));
 };
 
-const { tag } = Astro.params;
-const allPosts: BlogPost[] = (await getCollection('blog')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-const taggedPosts = allPosts.filter((post) => post.data.tags?.map((tag) => slugify(tag)).includes(tag || ''));
-const title = `All Posts Tagged with ${unslugify(tag || '')}`;
-const description = `All Posts Tagged with ${unslugify(tag || '')}`;
+const { tag = '' } = Astro.params;
+const { blogPosts, fragments, projects, photos, allTags } = await getTaggedContent(tag);
+const tagLabel = allTags.find((entry) => entry.value === tag)?.label ?? unslugify(tag);
+const title = `检索标签：${tagLabel}`;
+const description = `站内所有带有「${tagLabel}」标签的内容。`;
 ---
 
-<BaseLayout
-	title={title}
-	description={description}
->
-  <div class='container'>
-    <div class="mb-10">
-      <h1 class="text-3xl font-bold mb-2">{title}</h1>
-    </div>
-    <PostsByYear posts={taggedPosts}/>
-  </div>
+<BaseLayout title={title} description={description}>
+	<div class='container'>
+		<div class='mb-10'>
+			<h1 class='text-3xl font-bold mb-2'>{title}</h1>
+			<p class='leading-7 text-zinc-700 dark:text-zinc-300'>{description}</p>
+		</div>
+
+		<div class='grid gap-10'>
+			<section id={tagSectionAnchors.blog} class='scroll-mt-24'>
+				<div class='mb-3 flex justify-between gap-2 border-b dark:border-b-zinc-700'>
+					<h2 class='mb-3 text-lg font-bold'>文章 / Posts</h2>
+					<a href='/posts/' class='inline-block py-2 underline dark:prose-invert'>All posts &raquo;</a>
+				</div>
+				{blogPosts.length > 0 ? <PostsByYear posts={blogPosts} /> : <p class='text-sm text-zinc-600 dark:text-zinc-400'>暂无文章。</p>}
+			</section>
+
+			<section id={tagSectionAnchors.fragments} class='scroll-mt-24'>
+				<div class='mb-3 flex justify-between gap-2 border-b dark:border-b-zinc-700'>
+					<h2 class='mb-3 text-lg font-bold'>随笔 / Fragments</h2>
+					<a href='/fragments/' class='inline-block py-2 underline dark:prose-invert'>All fragments &raquo;</a>
+				</div>
+				{
+					fragments.length > 0 ? (
+						<div class='grid gap-3 md:grid-cols-2'>
+							{fragments.map((fragment) => (
+								<a
+									class='rounded-lg border border-zinc-200 p-4 no-underline transition hover:border-zinc-500 dark:border-zinc-700 dark:hover:border-zinc-300'
+									href={`/fragments/${fragment.id}/`}
+								>
+									<h3 class='font-semibold text-zinc-900 dark:text-zinc-100'>{fragment.data.title}</h3>
+									<p class='mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300'>{fragment.data.description}</p>
+									<time class='mt-3 block text-xs text-zinc-500 dark:text-zinc-400'>
+										{fragment.data.pubDate.toLocaleDateString('zh-CN')}
+									</time>
+								</a>
+							))}
+						</div>
+					) : (
+						<p class='text-sm text-zinc-600 dark:text-zinc-400'>暂无随笔。</p>
+					)
+				}
+			</section>
+
+			<section id={tagSectionAnchors.projects} class='scroll-mt-24'>
+				<div class='mb-3 flex justify-between gap-2 border-b dark:border-b-zinc-700'>
+					<h2 class='mb-3 text-lg font-bold'>捣鼓玩意 / Projects</h2>
+					<a href='/projects/' class='inline-block py-2 underline dark:prose-invert'>All projects &raquo;</a>
+				</div>
+				{projects.length > 0 ? <ProjectList projects={projects} /> : <p class='text-sm text-zinc-600 dark:text-zinc-400'>暂无项目。</p>}
+			</section>
+
+			<section id={tagSectionAnchors.photos} class='scroll-mt-24'>
+				<div class='mb-3 flex justify-between gap-2 border-b dark:border-b-zinc-700'>
+					<h2 class='mb-3 text-lg font-bold'>随手拍 / Photos</h2>
+					<a href='/photos/' class='inline-block py-2 underline dark:prose-invert'>All photos &raquo;</a>
+				</div>
+				{
+					photos.length > 0 ? (
+						<div class='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+							{photos.map((photo) => (
+								<article class='overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700'>
+									<img
+										class='h-52 w-full bg-zinc-100 object-cover dark:bg-zinc-800'
+										src={photo.src}
+										alt={photo.alt || photo.title || tagLabel}
+										loading='lazy'
+									/>
+									<div class='p-3'>
+										<h3 class='font-semibold text-zinc-900 dark:text-zinc-100'>{photo.title || photo.alt || 'Untitled'}</h3>
+										{photo.description && <p class='mt-1 text-sm leading-6 text-zinc-600 dark:text-zinc-300'>{photo.description}</p>}
+									</div>
+								</article>
+							))}
+						</div>
+					) : (
+						<p class='text-sm text-zinc-600 dark:text-zinc-400'>暂无照片。</p>
+					)
+				}
+			</section>
+		</div>
+	</div>
 </BaseLayout>

@@ -1,27 +1,41 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import Prose from '../../components/Prose.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
-import { getPhotoArchiveYears } from '../../lib/photoArchive';
-import { formatPhotoDate } from '../../lib/photoDate';
-import { getGalleryItems } from '../../lib/server/gallery';
-import { getTagHref } from '../../lib/tags';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Prose from '../../../components/Prose.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../../consts';
+import { filterPhotosByArchive, getPhotoArchiveYears } from '../../../lib/photoArchive';
+import { formatPhotoDate } from '../../../lib/photoDate';
+import { getGalleryItems } from '../../../lib/server/gallery';
+import { getTagHref } from '../../../lib/tags';
 
-const galleryItems = await getGalleryItems();
-const archiveYears = getPhotoArchiveYears(galleryItems);
-const activeYear = null;
-const archiveLabel = '全部时间';
+export async function getStaticPaths() {
+	const allItems = await getGalleryItems();
+	const archiveYears = getPhotoArchiveYears(allItems);
+
+	return archiveYears.map((year) => ({
+		params: { year: year.year },
+		props: {
+			allItems,
+			archiveYears,
+			currentYear: year.year
+		}
+	}));
+}
+
+const { allItems, archiveYears, currentYear } = Astro.props;
+const galleryItems = filterPhotosByArchive(allItems, currentYear);
+const activeYear = archiveYears.find((year) => year.year === currentYear) ?? null;
+const archiveLabel = `${currentYear} 年`;
 const galleryTags = ['全部', ...new Set(galleryItems.flatMap((item) => item.tags ?? []))];
 ---
 
-<BaseLayout title={`Photos - ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
+<BaseLayout title={`Photos ${currentYear} - ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
 	<div class='container'>
 		<div class='mb-8'>
 			<h1 class='text-3xl md:text-4xl font-bold mb-2'>光阴故事，目之所及的二进制</h1>
 
 			<Prose>
 				<p class='text-zinc-700 dark:text-zinc-300'>
-					这里展示的是画廊总览，照片存储采用了<a href='https://cloudflare.com/products/r2' target='_blank'> Cloudflare R2 </a> 图床链接。
+					筛选了 {currentYear} 年的照片集
 				</p>
 			</Prose>
 		</div>
@@ -32,7 +46,7 @@ const galleryTags = ['全部', ...new Set(galleryItems.flatMap((item) => item.ta
 				<div class='flex flex-wrap gap-2'>
 					<a
 						href='/photos/'
-						class='rounded-full border border-zinc-900 bg-zinc-900 px-3 py-1.5 text-sm text-white transition-colors dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
+						class='rounded-full border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500'
 					>
 						全部
 					</a>
@@ -40,7 +54,12 @@ const galleryTags = ['全部', ...new Set(galleryItems.flatMap((item) => item.ta
 						archiveYears.map((year) => (
 							<a
 								href={year.href}
-								class='rounded-full border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500'
+								class:list={[
+									'rounded-full border px-3 py-1.5 text-sm transition-colors',
+									year.year === currentYear
+										? 'border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
+										: 'border-zinc-300 text-zinc-700 hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500'
+								]}
 							>
 								{year.year}
 							</a>
@@ -48,6 +67,35 @@ const galleryTags = ['全部', ...new Set(galleryItems.flatMap((item) => item.ta
 					}
 				</div>
 			</div>
+
+			{
+				activeYear && (
+					<div class='py-3 sm:py-4'>
+						<div class='border-t border-zinc-200 dark:border-zinc-800'></div>
+					</div>
+					<div class='flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5'>
+						<p class='shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400'>{currentYear} 月份</p>
+						<div class='flex flex-wrap gap-2'>
+							<a
+								href={activeYear.href}
+								class='rounded-full border border-zinc-900 bg-zinc-900 px-3 py-1.5 text-sm text-white transition-colors dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
+							>
+								全年
+							</a>
+							{
+								activeYear.months.map((month) => (
+									<a
+										href={month.href}
+										class='rounded-full border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500'
+									>
+										{Number(month.month)} 月
+									</a>
+								))
+							}
+						</div>
+					</div>
+				)
+			}
 		</section>
 
 		<div class='mb-6 flex flex-wrap gap-2' id='photo-filters'>
@@ -135,19 +183,6 @@ const galleryTags = ['全部', ...new Set(galleryItems.flatMap((item) => item.ta
 		</div>
 
 		<div id='photo-pagination' class='mt-8 flex flex-wrap items-center justify-center gap-2'></div>
-	</div>
-
-	<div id='photo-lightbox' class='photo-lightbox' aria-hidden='true' hidden>
-		<div class='photo-lightbox__backdrop' data-lightbox-close></div>
-		<div class='photo-lightbox__dialog' role='dialog' aria-modal='true' aria-label='图片预览'>
-			<button type='button' class='photo-lightbox__close' data-lightbox-close aria-label='关闭预览'>×</button>
-			<button type='button' class='photo-lightbox__nav photo-lightbox__nav--prev' data-lightbox-prev aria-label='上一张'>‹</button>
-			<figure class='photo-lightbox__figure'>
-				<img id='photo-lightbox-image' src='' alt='' class='photo-lightbox__image' />
-				<figcaption id='photo-lightbox-caption' class='photo-lightbox__caption'></figcaption>
-			</figure>
-			<button type='button' class='photo-lightbox__nav photo-lightbox__nav--next' data-lightbox-next aria-label='下一张'>›</button>
-		</div>
 	</div>
 </BaseLayout>
 
@@ -273,99 +308,12 @@ const galleryTags = ['全部', ...new Set(galleryItems.flatMap((item) => item.ta
 		);
 	};
 
-	const initPhotoLightbox = () => {
-		const triggers = Array.from(document.querySelectorAll('.photo-trigger'));
-		const lightbox = document.getElementById('photo-lightbox');
-		const image = document.getElementById('photo-lightbox-image');
-		const caption = document.getElementById('photo-lightbox-caption');
-		if (!lightbox || !image || !caption || triggers.length === 0) return;
-		if (lightbox.dataset.bound === '1') return;
-		lightbox.dataset.bound = '1';
-
-		let currentIndex = 0;
-		const getActiveTriggers = () =>
-			triggers.filter((trigger) => !(trigger.closest('.photo-card') instanceof HTMLElement && trigger.closest('.photo-card').hidden));
-
-		const render = (index) => {
-			const activeTriggers = getActiveTriggers();
-			if (activeTriggers.length === 0) return;
-			const safeIndex = (index + activeTriggers.length) % activeTriggers.length;
-			const trigger = activeTriggers[safeIndex];
-			const src = trigger.getAttribute('data-photo-src') || '';
-			const alt = trigger.getAttribute('data-photo-alt') || '';
-			const title = trigger.getAttribute('data-photo-title') || '';
-			currentIndex = safeIndex;
-			image.setAttribute('src', src);
-			image.setAttribute('alt', alt || title || `photo-${safeIndex + 1}`);
-			caption.textContent = title || alt || '';
-		};
-
-		const open = (index) => {
-			const activeTriggers = getActiveTriggers();
-			const safeIndex = Math.max(
-				activeTriggers.findIndex((trigger) => trigger === triggers[index]),
-				0
-			);
-			render(safeIndex);
-			lightbox.hidden = false;
-			lightbox.setAttribute('aria-hidden', 'false');
-			document.body.classList.add('photo-lightbox-open');
-		};
-
-		const close = () => {
-			lightbox.hidden = true;
-			lightbox.setAttribute('aria-hidden', 'true');
-			document.body.classList.remove('photo-lightbox-open');
-			image.setAttribute('src', '');
-		};
-
-		const step = (delta) => {
-			render(currentIndex + delta);
-		};
-
-		triggers.forEach((trigger, index) => {
-			trigger.addEventListener('click', () => open(index));
-		});
-
-		lightbox.querySelectorAll('[data-lightbox-close]').forEach((element) => {
-			element.addEventListener('click', close);
-		});
-
-		lightbox.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => step(-1));
-		lightbox.querySelector('[data-lightbox-next]')?.addEventListener('click', () => step(1));
-
-		document.addEventListener('keydown', (event) => {
-			if (lightbox.hidden) return;
-			if (event.key === 'Escape') close();
-			if (event.key === 'ArrowLeft') step(-1);
-			if (event.key === 'ArrowRight') step(1);
-		});
-
-		document.addEventListener(
-			'astro:before-swap',
-			() => {
-				close();
-				lightbox.dataset.bound = '0';
-			},
-			{ once: true }
-		);
-	};
-
 	if (document.readyState === 'loading') {
-		document.addEventListener(
-			'DOMContentLoaded',
-			() => {
-				initPhotoFilters();
-				initPhotoLightbox();
-			},
-			{ once: true }
-		);
+		document.addEventListener('DOMContentLoaded', initPhotoFilters, { once: true });
 	} else {
 		initPhotoFilters();
-		initPhotoLightbox();
 	}
 	document.addEventListener('astro:page-load', initPhotoFilters);
-	document.addEventListener('astro:page-load', initPhotoLightbox);
 </script>
 
 <style>
@@ -405,111 +353,5 @@ const galleryTags = ['全部', ...new Set(galleryItems.flatMap((item) => item.ta
 	.photo-trigger:focus-visible .photo-hover-note {
 		opacity: 1;
 		transform: translateY(0);
-	}
-
-	.photo-lightbox {
-		position: fixed;
-		inset: 0;
-		z-index: 70;
-	}
-
-	.photo-lightbox__backdrop {
-		position: absolute;
-		inset: 0;
-		background: rgb(9 9 11 / 0.84);
-		backdrop-filter: blur(6px);
-	}
-
-	.photo-lightbox__dialog {
-		position: relative;
-		z-index: 1;
-		height: 100%;
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) auto;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 1.25rem;
-	}
-
-	.photo-lightbox__figure {
-		margin: 0;
-		display: grid;
-		gap: 0.85rem;
-		justify-items: center;
-	}
-
-	.photo-lightbox__image {
-		display: block;
-		max-width: min(94vw, 1600px);
-		max-height: 82vh;
-		width: auto;
-		height: auto;
-		border-radius: 1rem;
-		box-shadow: 0 24px 80px rgb(0 0 0 / 0.35);
-		background: rgb(24 24 27);
-	}
-
-	.photo-lightbox__caption {
-		min-height: 1.5rem;
-		text-align: center;
-		color: rgb(244 244 245);
-		font-size: 0.95rem;
-	}
-
-	.photo-lightbox__close,
-	.photo-lightbox__nav {
-		border: 0;
-		color: white;
-		background: rgb(255 255 255 / 0.12);
-		backdrop-filter: blur(6px);
-		cursor: pointer;
-	}
-
-	.photo-lightbox__close {
-		position: absolute;
-		top: 1rem;
-		right: 1rem;
-		width: 2.5rem;
-		height: 2.5rem;
-		border-radius: 999px;
-		font-size: 1.6rem;
-		line-height: 1;
-	}
-
-	.photo-lightbox__nav {
-		width: 3rem;
-		height: 3rem;
-		border-radius: 999px;
-		font-size: 2rem;
-		line-height: 1;
-	}
-
-	:global(body.photo-lightbox-open) {
-		overflow: hidden;
-	}
-
-	@media (max-width: 720px) {
-		.photo-lightbox__dialog {
-			grid-template-columns: 1fr;
-			padding: 1rem;
-		}
-
-		.photo-lightbox__nav {
-			position: absolute;
-			bottom: 1rem;
-		}
-
-		.photo-lightbox__nav--prev {
-			left: 1rem;
-		}
-
-		.photo-lightbox__nav--next {
-			right: 1rem;
-		}
-
-		.photo-lightbox__image {
-			max-width: 100%;
-			max-height: 78vh;
-		}
 	}
 </style>

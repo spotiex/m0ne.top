@@ -4,6 +4,7 @@ import type { Project } from '../data/projects';
 import { kFormatter } from '../utils';
 import GithubWhite from '@src/assets/img/github-mark-white.svg';
 import GithubBlack from '@src/assets/img/github-mark.svg';
+import { getTagHref } from '../lib/tags';
 
 const { projects } = Astro.props;
 ---
@@ -15,14 +16,15 @@ const { projects } = Astro.props;
 				<div class='flex justify-between items-center'>
 					<div class='flex gap-2'>
 						{(project.tags || [])?.map((tag: string) => (
-							<span
+							<a
 								class='border border-zinc-300 dark:border-zinc-700 rounded-2xl
                     text-sm text-zinc-700 dark:text-zinc-300 no-underline px-2 py-0.5
                     transition-all duration-700
                   hover:border-zinc-700 dark:hover:border-zinc-300'
+								href={getTagHref(tag, 'projects')}
 							>
 								{tag}
-							</span>
+							</a>
 						))}
 					</div>
 

@@ -1,135 +1,291 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { HOME_GALLERY_ITEMS, SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import { isPhotoAdminAuthenticated, isPhotoAdminConfigured } from '../../lib/server/photoAdminAuth';
+import { getGalleryItems } from '../../lib/server/gallery';
+import { getCurrentPhotoDate } from '../../lib/photoDate';
 
-const isDev = import.meta.env.DEV;
-const recentItems = HOME_GALLERY_ITEMS.slice(-6).reverse();
-const existingPhotoSources = HOME_GALLERY_ITEMS.map((item) => item.src);
+export const prerender = false;
+
+const isConfigured = isPhotoAdminConfigured();
+const isAuthed = isPhotoAdminAuthenticated(Astro.cookies);
+const galleryItems = await getGalleryItems();
+const recentItems = galleryItems.slice(-6).reverse();
+const existingPhotoSources = galleryItems.map((item) => item.src);
+const recentPhotoItems = recentItems.map((item) => ({
+	src: item.src,
+	alt: item.alt,
+	title: item.title,
+	date: item.date,
+	description: item.description,
+	tags: item.tags
+}));
+const uploadPublicUrl = import.meta.env.IMAGEPORT_S3_PUBLIC_URL || '未配置 IMAGEPORT_S3_PUBLIC_URL';
+const photoTimeZone = import.meta.env.IMAGEPORT_PHOTO_TIMEZONE || 'Asia/Hong_Kong';
+const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 ---
 
 <BaseLayout title={`Manage Photos - ${SITE_TITLE}`} description={SITE_DESCRIPTION}>
-	<div class='container max-w-5xl'>
-		<div class='mb-8'>
-			<h1 class='text-3xl md:text-4xl font-bold mb-2'>本地图廊录入</h1>
-			<p class='text-zinc-700 dark:text-zinc-300'>
-				填写 `src / alt / title / date / description / tags`，确认图片预览无误后保存到 `src/consts.ts`。
-			</p>
-		</div>
+	<div class='container max-w-6xl'>
+		<header class='mb-6 border-b border-zinc-200 pb-5 dark:border-zinc-800'>
+			<div class='flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
+				<div>
+					<p class='mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400'>Photos Console</p>
+					<h1 class='text-3xl font-bold text-zinc-950 dark:text-zinc-50'>图床管理</h1>
+				</div>
+					<div class='grid grid-cols-2 gap-2 text-sm sm:grid-cols-4'>
+						<div class='rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800'>
+							<p class='text-xs text-zinc-500 dark:text-zinc-400'>Gallery</p>
+							<p class='font-semibold text-zinc-950 dark:text-zinc-50'>{galleryItems.length} 张</p>
+					</div>
+					<div class='rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800'>
+						<p class='text-xs text-zinc-500 dark:text-zinc-400'>Target</p>
+						<p class='font-semibold text-zinc-950 dark:text-zinc-50'>R2 JSON</p>
+					</div>
+					<div class='rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800'>
+						<p class='text-xs text-zinc-500 dark:text-zinc-400'>Mode</p>
+						<p class='font-semibold text-zinc-950 dark:text-zinc-50'>{isAuthed ? '已登录' : '未登录'}</p>
+					</div>
+					{
+						isAuthed && (
+							<button
+								id='photo-logout-button'
+								type='button'
+								class='rounded-lg border border-zinc-200 px-3 py-2 text-left transition hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900/70'
+							>
+								<span class='block text-xs text-zinc-500 dark:text-zinc-400'>Action</span>
+								<span class='block font-semibold text-zinc-950 dark:text-zinc-50'>退出</span>
+							</button>
+						)
+					}
+				</div>
+			</div>
+		</header>
 
 		{
-			!isDev ? (
-				<div class='rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'>
-					这个工具页仅在本地开发环境可写入使用。
+			!isConfigured ? (
+				<div class='rounded-lg border border-amber-300 bg-amber-50 px-5 py-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'>
+					照片后台账号未配置。请在部署环境中设置 PHOTO_ADMIN_USERNAME、PHOTO_ADMIN_PASSWORD、PHOTO_ADMIN_SESSION_SECRET。
+				</div>
+			) : !isAuthed ? (
+				<div class='mx-auto max-w-md rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950'>
+					<form id='photo-login-form' class='space-y-4'>
+						<div>
+							<h2 class='text-lg font-semibold text-zinc-950 dark:text-zinc-50'>登录照片后台</h2>
+						</div>
+						<label class='block'>
+							<span class='mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400'>Username</span>
+							<input
+								id='photo-login-username'
+								name='username'
+								type='text'
+								autocomplete='username'
+								required
+								class='w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+							/>
+						</label>
+						<label class='block'>
+							<span class='mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400'>Password</span>
+							<input
+								id='photo-login-password'
+								name='password'
+								type='password'
+								autocomplete='current-password'
+								required
+								class='w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+							/>
+						</label>
+						<div class='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+							<p id='photo-login-status' class='min-h-5 text-sm text-zinc-500 dark:text-zinc-400'></p>
+							<button
+								type='submit'
+								class='rounded-lg bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-300'
+							>
+								登录
+							</button>
+						</div>
+					</form>
 				</div>
 			) : (
-				<div class='grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]'>
-					<div class='space-y-6'>
-						<section class='rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900'>
-							<form id='photo-manage-form' class='space-y-4'>
-								<label class='block'>
-									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>图片 URL `src`</span>
-									<input
-										id='photo-src'
-										name='src'
-										type='url'
-										required
-										placeholder='https://img.example.com/2026/04/demo.jpg'
-										class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
-									/>
-								</label>
-
-								<label class='block'>
-									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>替代文本 `alt`</span>
-									<input
-										id='photo-alt'
-										name='alt'
-										type='text'
-										placeholder='例如：北京夜景'
-										class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
-									/>
-								</label>
-
-								<label class='block'>
-									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>标题 `title`</span>
-									<input
-										id='photo-title'
-										name='title'
-										type='text'
-										placeholder='例如：景山公园'
-									class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
-									/>
-								</label>
-
-								<label class='block'>
-									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>日期 `date`</span>
-									<input
-										id='photo-date'
-										name='date'
-										type='text'
-										placeholder='例如：2026/04/27'
-										class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
-									/>
-								</label>
-
-								<label class='block'>
-									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>描述 `description`</span>
-									<textarea
-										id='photo-description'
-										name='description'
-										rows='3'
-										placeholder='例如：春天傍晚的迎泽大桥，风很轻。'
-										class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
-									></textarea>
-								</label>
-
-								<label class='block'>
-									<span class='mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300'>标签 `tags`</span>
-									<input
-										id='photo-tags'
-										name='tags'
-										type='text'
-										placeholder='用逗号分隔，例如：旅行, 建筑, 人物'
-										class='w-full rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
-									/>
-								</label>
-
-								<div class='flex items-center gap-3 pt-2'>
-									<button
-										type='submit'
-										class='rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300'
-									>
-										保存到 consts.ts
-									</button>
-									<p id='photo-manage-status' class='text-sm text-zinc-500 dark:text-zinc-400'></p>
+				<div class='grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
+					<main class='space-y-5'>
+						<form id='photo-manage-form' class='overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950'>
+							<div class='flex flex-col gap-2 border-b border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/40 sm:flex-row sm:items-center sm:justify-between'>
+								<div>
+									<p class='text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400'>Workflow</p>
+									<h2 id='photo-workflow-title' class='mt-1 text-base font-semibold text-zinc-950 dark:text-zinc-50'>New Photo</h2>
 								</div>
-								<p id='photo-duplicate-hint' class='hidden text-sm text-amber-600 dark:text-amber-300'></p>
-							</form>
-						</section>
+								<p id='photo-workflow-hint' class='text-sm text-zinc-500 dark:text-zinc-400'>选择或拖入图片，保存时自动上传并写入 gallery JSON。</p>
+							</div>
 
-						<section class='rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900'>
-							<h2 class='mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100'>最近条目</h2>
-							<ul class='grid gap-3 sm:grid-cols-2'>
+							<section id='photo-source-section' class='border-b border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/40'>
+								<div class='mb-3 flex items-center justify-between gap-3'>
+									<h2 class='text-sm font-semibold uppercase tracking-[0.12em] text-zinc-700 dark:text-zinc-300'>Source</h2>
+									<p id='photo-upload-status' class='min-h-5 text-right text-sm text-zinc-500 dark:text-zinc-400'></p>
+								</div>
+								<div class='grid items-end gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'>
+									<label class='block'>
+										<span class='mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400'>Local image</span>
+										<input
+											id='photo-file'
+											name='image'
+											type='file'
+											accept='image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff'
+											class='sr-only'
+										/>
+										<button
+											id='photo-file-trigger'
+											type='button'
+											class='flex h-10 w-full items-center justify-between gap-3 rounded-lg border border-zinc-300 bg-white px-3 text-left text-sm text-zinc-900 outline-none transition hover:bg-zinc-50 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900 dark:focus:ring-zinc-800'
+										>
+											<span id='photo-file-name' class='min-w-0 flex-1 truncate text-zinc-500 dark:text-zinc-400'>没有选择文件</span>
+											<span class='shrink-0 text-xs font-medium text-zinc-700 dark:text-zinc-300'>选择 / 拖入</span>
+										</button>
+									</label>
+
+									<div class='block'>
+										<span class='mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400'>Storage</span>
+										<div class='flex h-10 items-center truncate rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-700 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300'>
+											{uploadPublicUrl}
+										</div>
+									</div>
+
+								</div>
+							</section>
+
+							<section class='p-4'>
+								<div class='mb-4 flex items-center justify-between gap-3'>
+									<h2 class='text-sm font-semibold uppercase tracking-[0.12em] text-zinc-700 dark:text-zinc-300'>Metadata</h2>
+									<p id='photo-duplicate-hint' class='hidden text-right text-sm text-amber-600 dark:text-amber-300'></p>
+								</div>
+
+								<div class='grid gap-4 md:grid-cols-2'>
+									<label class='block md:col-span-2'>
+										<span class='mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400'>Image URL</span>
+										<input
+											id='photo-src'
+											name='src'
+											type='url'
+											readonly
+											placeholder='选择图片后自动生成'
+											class='w-full cursor-default rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-600 outline-none transition dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-300'
+										/>
+									</label>
+
+									<label class='block'>
+										<span class='mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400'>Title</span>
+										<input
+											id='photo-title'
+											name='title'
+											type='text'
+											placeholder='例如：景山公园'
+											class='w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+										/>
+									</label>
+
+									<label class='block'>
+										<span class='mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400'>Date</span>
+										<input
+											id='photo-date'
+											name='date'
+											type='text'
+											placeholder={`例如：${currentPhotoDate}`}
+											class='w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+										/>
+									</label>
+
+									<label class='block md:col-span-2'>
+										<span class='mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400'>Alt text</span>
+										<input
+											id='photo-alt'
+											name='alt'
+											type='text'
+											placeholder='例如：北京夜景'
+											class='w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+										/>
+									</label>
+
+									<label class='block md:col-span-2'>
+										<span class='mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400'>Description</span>
+										<textarea
+											id='photo-description'
+											name='description'
+											rows='4'
+											placeholder='例如：春天傍晚的迎泽大桥，风很轻。'
+											class='w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+										></textarea>
+									</label>
+
+									<label class='block md:col-span-2'>
+										<span class='mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400'>Tags</span>
+										<input
+											id='photo-tags'
+											name='tags'
+											type='text'
+											placeholder='用逗号分隔，例如：旅行, 建筑, 人物'
+											class='w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100'
+										/>
+									</label>
+								</div>
+							</section>
+
+							<footer class='flex flex-col gap-3 border-t border-zinc-200 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/40 sm:flex-row sm:items-center sm:justify-between'>
+								<p id='photo-manage-status' class='min-h-5 text-sm text-zinc-500 dark:text-zinc-400'></p>
+								<div class='flex flex-col gap-2 sm:flex-row sm:items-center'>
+									<button
+										id='photo-clear-button'
+										type='button'
+										class='rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800'
+									>
+										清除
+									</button>
+									<button
+										id='photo-save-button'
+										type='submit'
+										class='rounded-lg bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-300'
+									>
+										写入 gallery JSON
+									</button>
+								</div>
+							</footer>
+						</form>
+
+						<section class='rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950'>
+							<div class='border-b border-zinc-200 px-4 py-3 dark:border-zinc-800'>
+								<h2 class='text-sm font-semibold uppercase tracking-[0.12em] text-zinc-700 dark:text-zinc-300'>Recent</h2>
+							</div>
+							<ul id='photo-recent-list' class='divide-y divide-zinc-200 dark:divide-zinc-800'>
 								{
-									recentItems.map((item) => (
-										<li class='rounded-xl border border-zinc-200 px-3 py-3 dark:border-zinc-700'>
-											<p class='truncate text-sm font-medium text-zinc-900 dark:text-zinc-100'>{item.title || item.alt || item.src}</p>
-											<p class='mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400'>{item.src}</p>
+									recentItems.map((item, index) => (
+										<li>
+											<button
+												type='button'
+												data-photo-index={index}
+												class='grid w-full gap-2 px-4 py-3 text-left text-sm transition hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none dark:hover:bg-zinc-900/70 dark:focus:bg-zinc-900/70 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center'
+											>
+												<span class='truncate font-medium text-zinc-950 dark:text-zinc-50'>{item.title || item.alt || 'Untitled'}</span>
+												<span class='truncate font-mono text-xs text-zinc-500 dark:text-zinc-400'>{item.src}</span>
+											</button>
 										</li>
 									))
 								}
 							</ul>
 						</section>
-					</div>
+					</main>
 
-					<aside>
-						<section class='rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900'>
-							<h2 class='mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-100'>图片预览</h2>
-							<div id='photo-preview-empty' class='rounded-xl border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400'>
-								输入图片 URL 后会在这里实时预览。
+					<aside class='lg:sticky lg:top-24 lg:self-start'>
+						<section class='overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950'>
+							<div class='border-b border-zinc-200 px-4 py-3 dark:border-zinc-800'>
+								<h2 class='text-sm font-semibold uppercase tracking-[0.12em] text-zinc-700 dark:text-zinc-300'>Preview</h2>
 							</div>
-							<div id='photo-preview-wrap' class='hidden'>
-								<img id='photo-preview-image' src='' alt='' class='w-full rounded-xl border border-zinc-200 object-cover dark:border-zinc-700' />
-								<p id='photo-preview-meta' class='mt-3 text-sm text-zinc-600 dark:text-zinc-300'></p>
+							<div class='p-4'>
+								<div id='photo-preview-empty' class='flex aspect-[4/3] items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400'>
+									等待图片 URL
+								</div>
+								<div id='photo-preview-wrap' class='hidden'>
+									<img id='photo-preview-image' src='' alt='' class='aspect-[4/3] w-full rounded-lg border border-zinc-200 object-cover dark:border-zinc-700' />
+									<dl id='photo-preview-meta' class='mt-4 space-y-3 text-sm'></dl>
+								</div>
 							</div>
 						</section>
 					</aside>
@@ -137,12 +293,72 @@ const existingPhotoSources = HOME_GALLERY_ITEMS.map((item) => item.src);
 			)
 		}
 	</div>
+
+{
+	isConfigured && !isAuthed && (
+		<script is:inline>
+			const loginForm = document.getElementById('photo-login-form');
+			const loginUsernameInput = document.getElementById('photo-login-username');
+			const loginPasswordInput = document.getElementById('photo-login-password');
+			const loginStatusNode = document.getElementById('photo-login-status');
+
+			loginForm?.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				if (!(loginUsernameInput instanceof HTMLInputElement) || !(loginPasswordInput instanceof HTMLInputElement) || !(loginStatusNode instanceof HTMLElement)) {
+					return;
+				}
+
+				const submitButton = loginForm.querySelector('button[type="submit"]');
+				if (submitButton instanceof HTMLButtonElement) submitButton.disabled = true;
+				loginStatusNode.textContent = '登录中...';
+
+				try {
+					const response = await fetch('/api/photos/login.json', {
+						method: 'POST',
+						headers: {
+							'content-type': 'application/json'
+						},
+						body: JSON.stringify({
+							username: loginUsernameInput.value.trim(),
+							password: loginPasswordInput.value
+						})
+					});
+					const result = await response.json();
+
+					if (!response.ok) {
+						throw new Error(result?.error || '登录失败。');
+					}
+
+					loginStatusNode.textContent = '登录成功，页面即将刷新。';
+					window.setTimeout(() => {
+						window.location.reload();
+					}, 300);
+				} catch (error) {
+					loginStatusNode.textContent = error instanceof Error ? error.message : '登录失败。';
+				} finally {
+					if (submitButton instanceof HTMLButtonElement) submitButton.disabled = false;
+				}
+			});
+		</script>
+	)
+}
+
 </BaseLayout>
 
 {
-	isDev && (
-		<script is:inline define:vars={{ existingPhotoSources }}>
+	isAuthed && (
+		<script is:inline define:vars={{ existingPhotoSources, recentPhotoItems, photoTimeZone }}>
 			const form = document.getElementById('photo-manage-form');
+			const fileInput = document.getElementById('photo-file');
+			const fileTrigger = document.getElementById('photo-file-trigger');
+			const fileNameNode = document.getElementById('photo-file-name');
+			const logoutButton = document.getElementById('photo-logout-button');
+			const clearButton = document.getElementById('photo-clear-button');
+			const saveButton = document.getElementById('photo-save-button');
+			const sourceSection = document.getElementById('photo-source-section');
+			const workflowTitle = document.getElementById('photo-workflow-title');
+			const workflowHint = document.getElementById('photo-workflow-hint');
+			const uploadStatusNode = document.getElementById('photo-upload-status');
 			const srcInput = document.getElementById('photo-src');
 			const altInput = document.getElementById('photo-alt');
 			const titleInput = document.getElementById('photo-title');
@@ -155,44 +371,360 @@ const existingPhotoSources = HOME_GALLERY_ITEMS.map((item) => item.src);
 			const previewWrap = document.getElementById('photo-preview-wrap');
 			const previewImage = document.getElementById('photo-preview-image');
 			const previewMeta = document.getElementById('photo-preview-meta');
+			const recentList = document.getElementById('photo-recent-list');
 			const normalizedExistingSources = Array.isArray(existingPhotoSources)
 				? existingPhotoSources.map((value) => String(value).trim())
 				: [];
+			const normalizedRecentItems = Array.isArray(recentPhotoItems) ? recentPhotoItems : [];
+			let workflowMode = 'new';
+			let activeOriginalSrc = '';
+			let localPreviewUrl = '';
+			let prepareRequestId = 0;
+			let preparedUploadTarget = null;
 
 			const syncDuplicateHint = () => {
 				if (!(srcInput instanceof HTMLInputElement) || !(duplicateHint instanceof HTMLElement)) return false;
 				const currentSrc = srcInput.value.trim();
-				const isDuplicate = currentSrc !== '' && normalizedExistingSources.includes(currentSrc);
+				const isDuplicate = currentSrc !== '' && currentSrc !== activeOriginalSrc && normalizedExistingSources.includes(currentSrc);
 
 				duplicateHint.classList.toggle('hidden', !isDuplicate);
-				duplicateHint.textContent = isDuplicate ? '这个图片 URL 已经存在于 HOME_GALLERY_ITEMS 中。' : '';
+				duplicateHint.textContent = isDuplicate ? '这个图片 URL 已经存在于当前照片索引中。' : '';
 				srcInput.setAttribute('aria-invalid', isDuplicate ? 'true' : 'false');
 
 				return isDuplicate;
 			};
 
-			const syncPreview = () => {
-				if (!(previewImage instanceof HTMLImageElement) || !(previewMeta instanceof HTMLElement)) return;
-				const src = srcInput instanceof HTMLInputElement ? srcInput.value.trim() : '';
-				const alt = altInput instanceof HTMLInputElement ? altInput.value.trim() : '';
-				const title = titleInput instanceof HTMLInputElement ? titleInput.value.trim() : '';
-				const date = dateInput instanceof HTMLInputElement ? dateInput.value.trim() : '';
-				const description = descriptionInput instanceof HTMLTextAreaElement ? descriptionInput.value.trim() : '';
-				const tags = tagsInput instanceof HTMLInputElement ? tagsInput.value.trim() : '';
+			const getSelectedFile = () => (fileInput instanceof HTMLInputElement ? fileInput.files?.[0] ?? null : null);
+			const setFilePickerActive = (isActive) => {
+				if (!(fileTrigger instanceof HTMLElement)) return;
 
-				if (!src) {
+				fileTrigger.classList.toggle('border-zinc-500', isActive);
+				fileTrigger.classList.toggle('bg-zinc-50', isActive);
+				fileTrigger.classList.toggle('ring-2', isActive);
+				fileTrigger.classList.toggle('ring-zinc-200', isActive);
+				fileTrigger.classList.toggle('dark:bg-zinc-900', isActive);
+				fileTrigger.classList.toggle('dark:ring-zinc-800', isActive);
+			};
+			const clearLocalPreviewUrl = () => {
+				if (!localPreviewUrl) return;
+
+				URL.revokeObjectURL(localPreviewUrl);
+				localPreviewUrl = '';
+			};
+			const syncLocalPreview = () => {
+				const file = getSelectedFile();
+
+				clearLocalPreviewUrl();
+				if (file && file.type.startsWith('image/')) {
+					workflowMode = 'new';
+					activeOriginalSrc = '';
+					preparedUploadTarget = null;
+					setInputValue(srcInput, '');
+					localPreviewUrl = URL.createObjectURL(file);
+				}
+
+				syncWorkflow();
+				syncPreview();
+			};
+			const syncFilePickerLabel = () => {
+				if (!(fileInput instanceof HTMLInputElement) || !(fileNameNode instanceof HTMLElement)) return;
+				const file = fileInput.files?.[0];
+
+				fileNameNode.textContent = file?.name || '没有选择文件';
+				fileNameNode.classList.toggle('text-zinc-900', Boolean(file));
+				fileNameNode.classList.toggle('dark:text-zinc-100', Boolean(file));
+				fileNameNode.classList.toggle('text-zinc-500', !file);
+				fileNameNode.classList.toggle('dark:text-zinc-400', !file);
+			};
+			const setSelectedFile = (file) => {
+				if (!(fileInput instanceof HTMLInputElement)) return;
+
+				const transfer = new DataTransfer();
+				transfer.items.add(file);
+				fileInput.files = transfer.files;
+				syncFilePickerLabel();
+			};
+			const setInputValue = (node, value) => {
+				if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) {
+					node.value = value;
+				}
+			};
+			const getCurrentDateString = () => {
+				const formatter = new Intl.DateTimeFormat('en-CA', {
+					timeZone: photoTimeZone,
+					year: 'numeric',
+					month: '2-digit',
+					day: '2-digit'
+				});
+				const parts = formatter.formatToParts(new Date());
+				const getPart = (type) => parts.find((part) => part.type === type)?.value ?? '';
+				return `${getPart('year')}/${getPart('month')}/${getPart('day')}`;
+			};
+			const ensureDateValue = () => {
+				if (!(dateInput instanceof HTMLInputElement)) return '';
+				const currentValue = dateInput.value.trim();
+				if (currentValue) return currentValue;
+
+				const fallbackDate = getCurrentDateString();
+				dateInput.value = fallbackDate;
+				return fallbackDate;
+			};
+
+			const getCurrentPhoto = () => ({
+				src: srcInput instanceof HTMLInputElement ? srcInput.value.trim() : '',
+				alt: altInput instanceof HTMLInputElement ? altInput.value.trim() : '',
+				title: titleInput instanceof HTMLInputElement ? titleInput.value.trim() : '',
+				date: dateInput instanceof HTMLInputElement ? dateInput.value.trim() : '',
+				description: descriptionInput instanceof HTMLTextAreaElement ? descriptionInput.value.trim() : '',
+				tags: tagsInput instanceof HTMLInputElement ? tagsInput.value.trim() : ''
+			});
+
+			const syncWorkflow = () => {
+				const isEditMode = workflowMode === 'edit';
+				const hasPersistedUrl = srcInput instanceof HTMLInputElement && srcInput.value.trim() !== '';
+				const hasSelectedFile = Boolean(getSelectedFile());
+
+				sourceSection?.classList.toggle('hidden', isEditMode);
+				if (workflowTitle instanceof HTMLElement) {
+					workflowTitle.textContent = isEditMode ? 'Edit Photo' : 'New Photo';
+				}
+				if (workflowHint instanceof HTMLElement) {
+					workflowHint.textContent = isEditMode
+						? '正在编辑已有照片，可直接更新 metadata。'
+						: '选择或拖入图片，保存时自动上传并写入 gallery JSON。';
+				}
+				if (clearButton instanceof HTMLButtonElement) {
+					clearButton.textContent = isEditMode ? '退出编辑' : '清除';
+				}
+				if (saveButton instanceof HTMLButtonElement) {
+					saveButton.textContent = isEditMode ? '更新 metadata' : '保存到 gallery';
+					saveButton.disabled = isEditMode ? !hasPersistedUrl : !hasPersistedUrl && !hasSelectedFile;
+				}
+			};
+
+			const renderPreviewMeta = (photo) => {
+				if (!(previewMeta instanceof HTMLElement)) return;
+				const description = photo.description.length > 72 ? `${photo.description.slice(0, 72)}...` : photo.description;
+				const previewDate = photo.date || (workflowMode === 'new' ? getCurrentDateString() : '');
+				const rows = [
+					['Mode', workflowMode === 'edit' ? 'Edit Photo' : 'New Photo'],
+					['URL', photo.src || '(无 URL)'],
+					['Date', previewDate || '(无日期)'],
+					['Title', photo.title || '(无标题)'],
+					['Tags', photo.tags || '(无 tags)'],
+					['Description', description || '(无描述)']
+				];
+
+				previewMeta.replaceChildren(
+					...rows.map(([label, value]) => {
+						const row = document.createElement('div');
+						row.className = 'grid min-w-0 gap-1 border-b border-zinc-100 pb-2 last:border-b-0 dark:border-zinc-800';
+
+						const term = document.createElement('dt');
+						term.className = 'text-xs font-semibold uppercase tracking-[0.1em] text-zinc-500 dark:text-zinc-500';
+						term.textContent = label;
+
+						const detail = document.createElement('dd');
+						detail.className = label === 'URL'
+							? 'min-w-0 truncate text-zinc-700 dark:text-zinc-300'
+							: 'break-words text-zinc-700 dark:text-zinc-300';
+						detail.textContent = value;
+						if (label === 'URL') {
+							detail.title = value;
+						}
+
+						row.append(term, detail);
+						return row;
+					})
+				);
+			};
+
+			const syncPreview = () => {
+				if (!(previewImage instanceof HTMLImageElement)) return;
+				const photo = getCurrentPhoto();
+				const previewSrc = localPreviewUrl || photo.src;
+
+				if (!previewSrc) {
 					previewWrap?.classList.add('hidden');
 					previewEmpty?.classList.remove('hidden');
 					previewImage.removeAttribute('src');
-					previewMeta.textContent = '';
+					renderPreviewMeta(photo);
 					return;
 				}
 
 				previewWrap?.classList.remove('hidden');
 				previewEmpty?.classList.add('hidden');
-				previewImage.src = src;
-				previewImage.alt = alt || title || 'preview';
-				previewMeta.textContent = [title || '(无标题)', date || '(无日期)', alt || '(无 alt)', tags || '(无 tags)', description || '(无描述)'].join(' / ');
+				previewImage.src = previewSrc;
+				previewImage.alt = photo.alt || photo.title || 'preview';
+				renderPreviewMeta(photo);
+			};
+
+			const loadPhotoForEdit = (photo) => {
+				prepareRequestId += 1;
+				preparedUploadTarget = null;
+				workflowMode = 'edit';
+				activeOriginalSrc = String(photo?.src ?? '').trim();
+				if (fileInput instanceof HTMLInputElement) {
+					fileInput.value = '';
+				}
+				clearLocalPreviewUrl();
+				syncFilePickerLabel();
+				setInputValue(srcInput, activeOriginalSrc);
+				setInputValue(altInput, String(photo?.alt ?? ''));
+				setInputValue(titleInput, String(photo?.title ?? ''));
+				setInputValue(dateInput, String(photo?.date ?? ''));
+				setInputValue(descriptionInput, String(photo?.description ?? ''));
+				setInputValue(tagsInput, Array.isArray(photo?.tags) ? photo.tags.join(', ') : String(photo?.tags ?? ''));
+
+				if (statusNode instanceof HTMLElement) {
+					statusNode.textContent = activeOriginalSrc ? '已载入最近项目，可修改 metadata 后保存。' : '';
+				}
+
+				syncWorkflow();
+				syncPreview();
+				syncDuplicateHint();
+			};
+
+			const clearEditor = ({ statusMessage = '已清除当前输入，可以录入新照片。' } = {}) => {
+				prepareRequestId += 1;
+				preparedUploadTarget = null;
+				form?.reset();
+				if (fileInput instanceof HTMLInputElement) {
+					fileInput.value = '';
+				}
+				clearLocalPreviewUrl();
+
+				workflowMode = 'new';
+				activeOriginalSrc = '';
+				if (statusNode instanceof HTMLElement) {
+					statusNode.textContent = statusMessage;
+				}
+				if (uploadStatusNode instanceof HTMLElement) {
+					uploadStatusNode.textContent = '';
+				}
+
+				syncWorkflow();
+				syncFilePickerLabel();
+				syncPreview();
+				syncDuplicateHint();
+			};
+
+			const renderRecentItems = () => {
+				if (!(recentList instanceof HTMLElement)) return;
+
+				recentList.replaceChildren(
+					...normalizedRecentItems.map((item, index) => {
+						const listItem = document.createElement('li');
+						const button = document.createElement('button');
+						button.type = 'button';
+						button.dataset.photoIndex = String(index);
+						button.className =
+							'grid w-full gap-2 px-4 py-3 text-left text-sm transition hover:bg-zinc-50 focus:bg-zinc-50 focus:outline-none dark:hover:bg-zinc-900/70 dark:focus:bg-zinc-900/70 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center';
+
+						const title = document.createElement('span');
+						title.className = 'truncate font-medium text-zinc-950 dark:text-zinc-50';
+						title.textContent = item.title || item.alt || 'Untitled';
+
+						const src = document.createElement('span');
+						src.className = 'truncate font-mono text-xs text-zinc-500 dark:text-zinc-400';
+						src.textContent = item.src;
+
+						button.append(title, src);
+						button.addEventListener('click', () => {
+							const photo = normalizedRecentItems[index];
+							if (photo) loadPhotoForEdit(photo);
+						});
+						listItem.append(button);
+						return listItem;
+					})
+				);
+			};
+
+			const upsertRecentItem = (photo) => {
+				const normalizedPhoto = {
+					src: String(photo?.src ?? '').trim(),
+					alt: String(photo?.alt ?? ''),
+					title: String(photo?.title ?? ''),
+					date: String(photo?.date ?? ''),
+					description: String(photo?.description ?? ''),
+					tags: Array.isArray(photo?.tags) ? photo.tags.map((tag) => String(tag).trim()).filter(Boolean) : []
+				};
+				if (!normalizedPhoto.src) return;
+
+				const existingIndex = normalizedRecentItems.findIndex((item) => item.src === normalizedPhoto.src || item.src === activeOriginalSrc);
+				if (existingIndex >= 0) {
+					normalizedRecentItems.splice(existingIndex, 1);
+				}
+				normalizedRecentItems.unshift(normalizedPhoto);
+				if (normalizedRecentItems.length > 6) {
+					normalizedRecentItems.length = 6;
+				}
+
+				renderRecentItems();
+			};
+
+			const prepareSelectedFileUrl = async () => {
+				if (!(srcInput instanceof HTMLInputElement)) return;
+
+				const file = getSelectedFile();
+				const requestId = ++prepareRequestId;
+				preparedUploadTarget = null;
+
+				if (!file) {
+					setInputValue(srcInput, '');
+					syncWorkflow();
+					syncPreview();
+					syncDuplicateHint();
+					return null;
+				}
+
+				if (!file.type.startsWith('image/')) {
+					setInputValue(srcInput, '');
+					if (uploadStatusNode instanceof HTMLElement) {
+						uploadStatusNode.textContent = '只能选择图片文件。';
+					}
+					syncWorkflow();
+					syncPreview();
+					syncDuplicateHint();
+					return null;
+				}
+
+				try {
+					const response = await fetch('/api/photos/prepare.json', {
+						method: 'POST',
+						headers: {
+							'content-type': 'application/json'
+						},
+						body: JSON.stringify({
+							filename: file.name,
+							contentType: file.type
+						})
+					});
+					const result = await response.json();
+
+					if (requestId !== prepareRequestId) return;
+
+					if (!response.ok || !result?.url || !result?.uploadUrl || !result?.uploadHeaders) {
+						throw new Error(result?.error || '生成 URL 失败。');
+					}
+
+					preparedUploadTarget = result;
+					setInputValue(srcInput, result.url);
+					if (uploadStatusNode instanceof HTMLElement) uploadStatusNode.textContent = '';
+				} catch (error) {
+					if (requestId !== prepareRequestId) return;
+
+					preparedUploadTarget = null;
+					setInputValue(srcInput, '');
+					if (uploadStatusNode instanceof HTMLElement) {
+						uploadStatusNode.textContent = error instanceof Error ? error.message : '生成 URL 失败。';
+					}
+				}
+
+				syncWorkflow();
+				syncPreview();
+				syncDuplicateHint();
+				return preparedUploadTarget;
 			};
 
 			[srcInput, altInput, titleInput, dateInput, descriptionInput, tagsInput].forEach((node) => {
@@ -208,6 +740,108 @@ const existingPhotoSources = HOME_GALLERY_ITEMS.map((item) => item.src);
 				}
 			});
 
+			logoutButton?.addEventListener('click', async () => {
+				if (!(logoutButton instanceof HTMLButtonElement)) return;
+
+				logoutButton.disabled = true;
+				try {
+					await fetch('/api/photos/logout.json', {
+						method: 'POST'
+					});
+				} finally {
+					window.location.reload();
+				}
+			});
+
+			clearButton?.addEventListener('click', () => {
+				clearEditor();
+			});
+
+			fileTrigger?.addEventListener('click', () => {
+				if (fileInput instanceof HTMLInputElement) {
+					fileInput.click();
+				}
+			});
+
+			fileInput?.addEventListener('change', () => {
+				syncFilePickerLabel();
+				syncLocalPreview();
+				void prepareSelectedFileUrl();
+			});
+
+			['dragenter', 'dragover'].forEach((eventName) => {
+				fileTrigger?.addEventListener(eventName, (event) => {
+					event.preventDefault();
+					setFilePickerActive(true);
+				});
+			});
+
+			['dragleave', 'dragend'].forEach((eventName) => {
+				fileTrigger?.addEventListener(eventName, () => {
+					setFilePickerActive(false);
+				});
+			});
+
+			fileTrigger?.addEventListener('drop', (event) => {
+				event.preventDefault();
+				setFilePickerActive(false);
+
+				const file = event.dataTransfer?.files?.[0];
+				if (!file) return;
+
+				if (!file.type.startsWith('image/')) {
+					if (uploadStatusNode instanceof HTMLElement) {
+						uploadStatusNode.textContent = '只能拖入图片文件。';
+					}
+					return;
+				}
+
+				setSelectedFile(file);
+				syncLocalPreview();
+				void prepareSelectedFileUrl();
+			});
+
+			const uploadSelectedFile = async () => {
+				if (!(fileInput instanceof HTMLInputElement) || !(uploadStatusNode instanceof HTMLElement) || !(srcInput instanceof HTMLInputElement)) {
+					throw new Error('Upload controls are unavailable.');
+				}
+				const file = fileInput.files?.[0];
+				if (!file) {
+					throw new Error('请先选择一张本地图片。');
+				}
+				const target = preparedUploadTarget ?? await prepareSelectedFileUrl();
+				if (!target?.uploadUrl || !target?.url) {
+					throw new Error('未能生成上传地址。');
+				}
+
+				uploadStatusNode.textContent = '上传中...';
+
+				const response = await fetch(target.uploadUrl, {
+					method: 'PUT',
+					headers: target.uploadHeaders,
+					body: file
+				});
+
+				if (!response.ok) {
+					const message = await response.text().catch(() => '');
+					throw new Error(message || '上传失败。');
+				}
+
+				setInputValue(srcInput, target.url);
+				fileInput.value = '';
+				clearLocalPreviewUrl();
+				preparedUploadTarget = null;
+				activeOriginalSrc = '';
+				workflowMode = 'new';
+				syncFilePickerLabel();
+				syncWorkflow();
+
+				uploadStatusNode.textContent = target?.key ? `上传完成：${target.key}` : '上传完成，URL 已填入。';
+				syncPreview();
+				syncDuplicateHint();
+				return target.url;
+			};
+
 			form?.addEventListener('submit', async (event) => {
 				event.preventDefault();
 				if (!(srcInput instanceof HTMLInputElement) || !(altInput instanceof HTMLInputElement) || !(titleInput instanceof HTMLInputElement) || !(dateInput instanceof HTMLInputElement) || !(descriptionInput instanceof HTMLTextAreaElement) || !(tagsInput instanceof HTMLInputElement) || !(statusNode instanceof HTMLElement)) {
@@ -215,17 +849,41 @@ const existingPhotoSources = HOME_GALLERY_ITEMS.map((item) => item.src);
 				}
 
 				statusNode.textContent = '保存中...';
+				if (saveButton instanceof HTMLButtonElement) {
+					saveButton.disabled = true;
+				}
 
-				if (syncDuplicateHint()) {
-					statusNode.textContent = '检测到重复 URL，已阻止保存。';
+				const selectedFile = getSelectedFile();
+				if (workflowMode !== 'edit' && selectedFile) {
+					try {
+						statusNode.textContent = '上传图片中...';
+						await uploadSelectedFile();
+						statusNode.textContent = '图片已上传，正在写入 gallery JSON...';
+					} catch (error) {
+						statusNode.textContent = error instanceof Error ? error.message : '上传失败。';
+						syncWorkflow();
+						return;
+					}
+				} else if (!srcInput.value.trim()) {
+					statusNode.textContent = workflowMode === 'edit' ? '当前照片缺少 URL，无法保存。' : '请先选择一张本地图片。';
+					syncWorkflow();
 					return;
 				}
 
+				if (syncDuplicateHint()) {
+					statusNode.textContent = '检测到重复 URL，已阻止保存。';
+					syncWorkflow();
+					return;
+				}
+
+				const resolvedDate = ensureDateValue();
+
 				const payload = {
 					src: srcInput.value.trim(),
+					originalSrc: activeOriginalSrc,
 					alt: altInput.value.trim(),
 					title: titleInput.value.trim(),
-					date: dateInput.value.trim(),
+					date: resolvedDate,
 					description: descriptionInput.value.trim(),
 					tags: tagsInput.value
 						.split(/[,，]/)
@@ -248,19 +906,45 @@ const existingPhotoSources = HOME_GALLERY_ITEMS.map((item) => item.src);
 						throw new Error(result?.error || '保存失败。');
 					}
 
-					statusNode.textContent = '已写入 consts.ts，页面即将刷新。';
-					form.reset();
-					syncPreview();
-					window.setTimeout(() => {
-						window.location.reload();
-					}, 700);
+					const isUpdate = result?.mode === 'update';
+					const savedItem = result?.item ?? payload;
+					const savedSrc = typeof result?.item?.src === 'string' ? result.item.src.trim() : srcInput.value.trim();
+					const successMessage = isUpdate
+						? (result?.indexUrl ? `已更新并写入 ${result.indexUrl}。` : '已更新 gallery JSON。')
+						: (result?.indexUrl ? `已上传并写入 ${result.indexUrl}。` : '已上传并保存到 gallery。');
+					statusNode.textContent = successMessage;
+					if (savedSrc && !normalizedExistingSources.includes(savedSrc)) {
+						normalizedExistingSources.push(savedSrc);
+					}
+					upsertRecentItem({
+						...savedItem,
+						src: savedSrc
+					});
+					if (isUpdate) {
+						if (fileInput instanceof HTMLInputElement) {
+							fileInput.value = '';
+						}
+						preparedUploadTarget = null;
+						activeOriginalSrc = savedSrc;
+						workflowMode = 'edit';
+						setInputValue(srcInput, savedSrc);
+						syncWorkflow();
+						syncFilePickerLabel();
+						syncPreview();
+					} else {
+						clearEditor({ statusMessage: successMessage });
+					}
 				} catch (error) {
 					statusNode.textContent = error instanceof Error ? error.message : '保存失败。';
+					syncWorkflow();
 				}
 			});
 
+			renderRecentItems();
 			syncPreview();
 			syncDuplicateHint();
+			syncWorkflow();
+			syncFilePickerLabel();
 		</script>
 	)
 }

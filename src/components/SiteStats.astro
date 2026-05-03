@@ -1,0 +1,246 @@
+---
+import type { SiteStats } from '../lib/contentStats';
+import { formatChineseCount } from '../lib/contentStats';
+
+interface Props {
+	stats: SiteStats;
+}
+
+const { stats } = Astro.props;
+const firstTinkerDate = new Date(2025, 10, 27);
+const today = new Date();
+const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+const tinkerDays = Math.max(1, Math.floor((todayStart.valueOf() - firstTinkerDate.valueOf()) / (1000 * 60 * 60 * 24)));
+
+const formatWordStat = (value: number) => {
+	if (value < 10000) {
+		return { value: String(value), unit: '字' };
+	}
+
+	return { value: formatChineseCount(value).replace(' 万', ''), unit: '万字' };
+};
+
+const wordStat = formatWordStat(stats.wordCount);
+
+const statItems = [
+	{
+		value: stats.postCount,
+		unit: '篇',
+		label: '文章',
+		icon: { paths: ['M6.5 4.5h8.2L19 8.8v10.7H6.5z', 'M14.5 4.8v4.4h4.2', 'M9 12h6.2', 'M9 15.2h4.6'] }
+	},
+	{
+		value: stats.fragmentCount,
+		unit: '则',
+		label: '随笔',
+		icon: {
+			paths: ['M5 19l4.3-1 9.6-9.6a2 2 0 0 0-2.8-2.8L6.5 15.2z', 'M14.8 6.8l2.8 2.8', 'M5 19h14']
+		}
+	},
+	{
+		value: stats.photoCount,
+		unit: '张',
+		label: '图床照片',
+		icon: {
+			paths: ['M4.8 5.5h14.4v13H4.8z', 'M7.2 16.2l3.7-4.1 2.6 2.8 1.7-1.8 2.8 3.1', 'M15.8 8.7h.1']
+		}
+	},
+	{
+		value: wordStat.value,
+		unit: wordStat.unit,
+		label: '写作字数',
+		icon: { paths: ['M4.8 18.4h14.4', 'M5.5 16.5 9 12.2l3.3 2.6 5.9-7.3', 'M9 12.2h.1', 'M12.3 14.8h.1', 'M18.2 7.5h.1'] }
+	},
+	{
+		value: stats.tagCount,
+		unit: '个',
+		label: '标签',
+		icon: { paths: ['M4.8 5.5h8.3l6.1 6.1-7.6 7.6-6.8-6.8z', 'M9 9h.1'] }
+	}
+];
+---
+
+<section class='site-stats not-prose' aria-labelledby='site-stats-title'>
+	<div class='site-stats__heading'>
+		<h2 id='site-stats-title'>记录 / Stats</h2>
+		<p>首次折腾，从 2025-11-27 开始，距今 {tinkerDays} 天</p>
+	</div>
+
+	<div class='site-stats__grid'>
+		{
+			statItems.map((item) => (
+				<div class='site-stats__item'>
+					<svg class='site-stats__mark' viewBox='0 0 24 24' aria-hidden='true'>
+						{item.icon.paths.map((path) => (
+							<path d={path} fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.65' />
+						))}
+					</svg>
+					<strong>
+						{item.value}
+						{item.unit && <span>{item.unit}</span>}
+					</strong>
+					<p>{item.label}</p>
+				</div>
+			))
+		}
+	</div>
+</section>
+
+<style>
+	.site-stats {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.site-stats__heading {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding-bottom: 0.75rem;
+		border-bottom: 1px solid rgb(228 228 231);
+	}
+
+	.site-stats h2 {
+		margin: 0;
+		font-size: 1.125rem;
+		line-height: 1.5;
+		font-weight: 700;
+		letter-spacing: 0;
+		color: rgb(24 24 27);
+	}
+
+	.site-stats__heading p {
+		margin: 0;
+		flex: 0 0 auto;
+		font-size: 0.95rem;
+		line-height: 1.5;
+		font-weight: 400;
+		color: rgb(113 113 122);
+	}
+
+	.site-stats__grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		overflow: hidden;
+		border: 1px solid rgb(228 228 231);
+		border-radius: 0.85rem;
+		background: rgb(250 250 250 / 0.5);
+	}
+
+	.site-stats__item {
+		position: relative;
+		min-height: 6.2rem;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+		gap: 0.25rem;
+		padding: 1rem 1.25rem;
+		border-bottom: 1px solid rgb(228 228 231);
+	}
+
+	.site-stats__mark {
+		position: absolute;
+		top: 1.05rem;
+		right: 1.1rem;
+		width: 2.15rem;
+		height: 2.15rem;
+		color: rgb(190 190 195);
+		pointer-events: none;
+	}
+
+	.site-stats__item:nth-child(odd) {
+		border-right: 1px solid rgb(228 228 231);
+	}
+
+	.site-stats__item:last-child {
+		grid-column: 1 / -1;
+		border-right: 0;
+		border-bottom: 0;
+	}
+
+	.site-stats__item strong {
+		display: flex;
+		align-items: baseline;
+		gap: 0.18rem;
+		font-size: clamp(1.45rem, 4vw, 1.95rem);
+		line-height: 1;
+		font-weight: 800;
+		letter-spacing: 0;
+		color: rgb(24 24 27);
+	}
+
+	.site-stats__item strong span {
+		font-size: 0.5em;
+		font-weight: 700;
+		color: rgb(82 82 91);
+	}
+
+	.site-stats__item p {
+		margin: 0;
+		font-size: 0.95rem;
+		font-weight: 600;
+		color: rgb(82 82 91);
+	}
+
+	@media (max-width: 640px) {
+		.site-stats__heading {
+			align-items: flex-start;
+			flex-direction: column;
+			gap: 0.25rem;
+		}
+
+		.site-stats__heading p {
+			font-size: 0.875rem;
+		}
+	}
+
+	@media (min-width: 768px) {
+		.site-stats__grid {
+			grid-template-columns: repeat(5, minmax(0, 1fr));
+		}
+
+		.site-stats__item,
+		.site-stats__item:nth-child(odd),
+		.site-stats__item:last-child {
+			grid-column: auto;
+			border-right: 1px solid rgb(228 228 231);
+			border-bottom: 0;
+		}
+
+		.site-stats__item:last-child {
+			border-right: 0;
+		}
+	}
+
+	:global(html.dark) .site-stats__heading,
+	:global(html.dark) .site-stats__grid,
+	:global(html.dark) .site-stats__item,
+	:global(html.dark) .site-stats__item:nth-child(odd) {
+		border-color: rgb(63 63 70);
+	}
+
+	:global(html.dark) .site-stats__grid {
+		background: rgb(24 24 27 / 0.46);
+	}
+
+	:global(html.dark) .site-stats h2,
+	:global(html.dark) .site-stats__item strong {
+		color: rgb(244 244 245);
+	}
+
+	:global(html.dark) .site-stats__heading p,
+	:global(html.dark) .site-stats__item strong span,
+	:global(html.dark) .site-stats__item p {
+		color: rgb(212 212 216);
+	}
+
+	:global(html.dark) .site-stats__heading p {
+		color: rgb(161 161 170);
+	}
+
+	:global(html.dark) .site-stats__mark {
+		color: rgb(82 82 91);
+	}
+</style>

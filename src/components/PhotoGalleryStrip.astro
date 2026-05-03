@@ -28,12 +28,12 @@ const bottomRowLoopPhotos = bottomRowPhotos.length > 0 ? [...bottomRowPhotos, ..
 		<a href='/photos/' class='inline-block py-2 underline dark:prose-invert'>All photos &raquo;</a>
 	</div>
 
-	{
-		photos.length === 0 ? (
-			<p class='text-sm text-zinc-600 dark:text-zinc-400'>
-				暂未配置图片。请在 <code>src/consts.ts</code> 的 <code>HOME_GALLERY_ITEMS</code> 填入图床链接。
-			</p>
-		) : (
+		{
+			photos.length === 0 ? (
+				<p class='text-sm text-zinc-600 dark:text-zinc-400'>
+					暂未读取到图片数据，请检查 gallery index 或图床配置。
+				</p>
+			) : (
 			<div class='gallery-stack'>
 				<div class='gallery-marquee'>
 					<div class='gallery-track'>

@@ -4,7 +4,8 @@ import { Image } from 'astro:assets';
 import liukanshan from '@src/assets/img/liukanshan.png';
 import GithubWhite from '@src/assets/img/github-mark-white.svg';
 import GithubBlack from '@src/assets/img/github-mark.svg';
-import { GITHUB_PROFILE_URL } from '@src/consts';
+import XiaohongshuBlack from '@src/assets/img/xiaohongshu-mark-black.svg';
+import { GITHUB_PROFILE_URL, XIAOHONGSHU_PROFILE_URL } from '@src/consts';
 
 
 const menu = [
@@ -57,6 +58,16 @@ const menu = [
 				<a class='p-3 hidden dark:block' href={GITHUB_PROFILE_URL} target='_blank' rel='noopener noreferrer' aria-label='GitHub profile'
 					><Image src={GithubWhite} width={24} height={24} alt='Github logo' /></a
 				>
+				<a
+					class='p-3 transition hover:scale-105'
+					href={XIAOHONGSHU_PROFILE_URL}
+					target='_blank'
+					rel='noopener noreferrer'
+					aria-label='小红书主页，105 次赞与收藏'
+					title='小红书主页 · 105 次赞与收藏'
+				>
+					<Image src={XiaohongshuBlack} width={24} height={24} alt='小红书 logo' class='dark:invert' />
+				</a>
 				<button class='p-3' id='themeToggle' aria-label='Theme mode'>
 					<svg
 						class='sun'
