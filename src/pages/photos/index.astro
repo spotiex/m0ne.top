@@ -6,6 +6,7 @@ import { getPhotoArchiveYears } from '../../lib/photoArchive';
 import { formatPhotoDate } from '../../lib/photoDate';
 import { getGalleryItems } from '../../lib/server/gallery';
 import { getTagHref } from '../../lib/tags';
+import { getImageUrl } from '../../lib/imageTransform';
 
 const galleryItems = await getGalleryItems();
 const archiveYears = getPhotoArchiveYears(galleryItems);
@@ -103,7 +104,7 @@ const galleryTags = ['全部', ...new Set(galleryItems.flatMap((item) => item.ta
 							aria-label={`查看大图 ${item.title || item.alt || `#${index + 1}`}`}
 						>
 							<div class='photo-trigger__media'>
-								<img src={item.src} alt={item.alt} loading='lazy' class='w-full aspect-[4/3] object-cover' />
+								<img src={getImageUrl(item.src, 800)} alt={item.alt} loading='lazy' class='w-full aspect-[4/3] object-cover' />
 								{item.description && <span class='photo-hover-note'>{item.description}</span>}
 							</div>
 						</button>

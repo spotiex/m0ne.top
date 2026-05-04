@@ -1,12 +1,12 @@
 ---
-import { loadEnv } from 'vite';
 import 'twikoo/dist/twikoo.css';
 
 interface Props {
 	path?: string;
 }
 
-const { TWIKOO_ENV_ID, TWIKOO_REGION } = loadEnv(process.env.NODE_ENV || 'production', process.cwd(), '');
+const TWIKOO_ENV_ID = import.meta.env.TWIKOO_ENV_ID ?? '';
+const TWIKOO_REGION = import.meta.env.TWIKOO_REGION ?? '';
 const { path = Astro.url.pathname } = Astro.props;
 
 const enabled = Boolean(TWIKOO_ENV_ID);

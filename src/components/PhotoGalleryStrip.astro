@@ -1,5 +1,6 @@
 ---
 import type { GalleryItem } from '../consts';
+import { getImageUrl } from '../lib/imageTransform';
 
 interface Props {
 	photos: GalleryItem[];
@@ -40,7 +41,7 @@ const bottomRowLoopPhotos = bottomRowPhotos.length > 0 ? [...bottomRowPhotos, ..
 						{
 							topRowLoopPhotos.map((item) => (
 								<article class='gallery-card'>
-									<img src={item.src} alt={item.alt} loading='lazy' />
+									<img src={getImageUrl(item.src, 480)} alt={item.alt} loading='lazy' />
 									{item.title && <p>{item.title}</p>}
 								</article>
 							))
@@ -54,7 +55,7 @@ const bottomRowLoopPhotos = bottomRowPhotos.length > 0 ? [...bottomRowPhotos, ..
 								{
 									bottomRowLoopPhotos.map((item) => (
 										<article class='gallery-card'>
-											<img src={item.src} alt={item.alt} loading='lazy' />
+											<img src={getImageUrl(item.src, 480)} alt={item.alt} loading='lazy' />
 											{item.title && <p>{item.title}</p>}
 										</article>
 									))

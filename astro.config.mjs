@@ -5,7 +5,15 @@ import tailwind from '@astrojs/tailwind';
 import { autoNewTabExternalLinks } from './src/autoNewTabExternalLinks';
 
 import partytown from '@astrojs/partytown';
-import netlify from '@astrojs/netlify';
+
+const isCloudflare = Boolean(process.env.CF_PAGES);
+
+const adapter = isCloudflare
+	? (await import('@astrojs/cloudflare')).default({
+			imageService: 'compile',
+			platformProxy: { enabled: true }
+		})
+	: (await import('@astrojs/netlify')).default();
 
 // https://astro.build/config
 export default defineConfig({
@@ -22,5 +30,11 @@ export default defineConfig({
 			]
 		]
 	},
-	adapter: netlify()
+	adapter,
+	...(isCloudflare && {
+		vite: {
+			ssr: { external: ['fsevents'] },
+			build: { rollupOptions: { external: ['fsevents'] } }
+		}
+	})
 });

@@ -4,10 +4,9 @@ import Header from './components/Header.astro';
 import Footer from './components/Footer.astro';
 import GlobalMusicPlayer from '../components/GlobalMusicPlayer.astro';
 import { ClientRouter } from 'astro:transitions';
-import { loadEnv } from 'vite';
 import { getNeteaseTopTracks } from '@src/lib/music/netease';
 
-const { GTAG_MEASUREMENT_ID } = loadEnv(process.env.NODE_ENV || 'production', process.cwd(), '');
+const GTAG_MEASUREMENT_ID = import.meta.env.GTAG_MEASUREMENT_ID ?? '';
 const { title, description, image, globalMusicTracks: passedGlobalMusicTracks = [] } = Astro.props;
 const isHome = Astro.url.pathname === '/';
 const globalMusicTracks =

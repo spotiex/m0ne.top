@@ -34,4 +34,11 @@ pnpm-debug.log*
 # Trellis / AI assistant workspace files
 .agents/
 .codex/
+.trellis/
 AGENTS.md
+
+# Unused lockfiles
+deno.lock
+
+# Non-project docs
+docs/

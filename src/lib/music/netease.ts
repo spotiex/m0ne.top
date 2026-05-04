@@ -1,6 +1,18 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import NeteaseCloudMusicApi from 'NeteaseCloudMusicApi';
+
+type NeteaseApi = typeof import('NeteaseCloudMusicApi');
+let _neteaseApi: NeteaseApi | null = null;
+const loadNeteaseApi = async (): Promise<NeteaseApi | null> => {
+  if (_neteaseApi) return _neteaseApi;
+  try {
+    const mod = await import('NeteaseCloudMusicApi');
+    _neteaseApi = mod.default ?? (mod as unknown as NeteaseApi);
+    return _neteaseApi;
+  } catch {
+    return null;
+  }
+};
 
 // 前端最终使用的歌曲结构。
 export interface NeteaseTrack {
@@ -135,7 +147,8 @@ const maybeRefreshLogin = async (cookie: string): Promise<void> => {
   if (Date.now() - lastRefreshAt < refreshIntervalMs) return;
 
   try {
-    await NeteaseCloudMusicApi.login_refresh({ cookie });
+    const api = await loadNeteaseApi();
+    if (api) await api.login_refresh({ cookie });
     await ensureParentDir(REFRESH_STATE_PATH);
     await writeFile(
       REFRESH_STATE_PATH,
@@ -172,7 +185,13 @@ export const getNeteaseTopTracks = async (options: GetTrackOptions = {}): Promis
     // 先做登录续期，再请求业务数据。
     await maybeRefreshLogin(cookie);
 
-    const playlistRes = await NeteaseCloudMusicApi.playlist_detail({
+    const api = await loadNeteaseApi();
+    if (!api) {
+      console.warn('[netease] NeteaseCloudMusicApi unavailable, fallback to cache');
+      return pickFromCache(cache, topK, options.random);
+    }
+
+    const playlistRes = await api.playlist_detail({
       id: playlistId,
       cookie,
     });
@@ -194,7 +213,7 @@ export const getNeteaseTopTracks = async (options: GetTrackOptions = {}): Promis
     }
 
     const ids = candidateTracks.map((t) => t.id).join(',');
-    const urlRes = await NeteaseCloudMusicApi.song_url_v1({
+    const urlRes = await api.song_url_v1({
       id: ids,
       level: 'standard' as any,
       cookie,
