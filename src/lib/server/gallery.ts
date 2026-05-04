@@ -1,6 +1,8 @@
 import type { GalleryItem } from '../../consts';
 import { getGalleryIndexKey, getR2ObjectText } from './r2';
 
+let galleryItemsPromise: Promise<GalleryItem[]> | null = null;
+
 export const normalizeGalleryItems = (value: unknown): GalleryItem[] => {
 	if (!Array.isArray(value)) return [];
 
@@ -25,7 +27,7 @@ export const normalizeGalleryItems = (value: unknown): GalleryItem[] => {
 	return photos;
 };
 
-export const getGalleryItems = async () => {
+const loadGalleryItems = async () => {
 	try {
 		const source = await getR2ObjectText(getGalleryIndexKey());
 		if (!source) return [];
@@ -35,4 +37,9 @@ export const getGalleryItems = async () => {
 		console.warn('[gallery] Failed to load gallery index from R2:', error);
 		return [];
 	}
+};
+
+export const getGalleryItems = () => {
+	galleryItemsPromise ??= loadGalleryItems();
+	return galleryItemsPromise;
 };
