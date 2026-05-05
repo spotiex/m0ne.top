@@ -1,0 +1,201 @@
+{
+	"Blog Image Center": {
+		"scope": "markdown,mdx",
+		"prefix": "imgc",
+		"description": "Insert a centered blog image with optional width class.",
+		"body": [
+			"<img class=\"img-center ${1|img-40,img-50,img-70|}\" src=\"${2}\" alt=\"${3}\" />"
+		]
+	},
+	"Blog Image Left": {
+		"scope": "markdown,mdx",
+		"prefix": "imgl",
+		"description": "Insert a left-aligned blog image.",
+		"body": [
+			"<img class=\"img-left ${1|img-40,img-50,img-70|}\" src=\"${2}\" alt=\"${3}\" />"
+		]
+	},
+	"Blog Image Right": {
+		"scope": "markdown,mdx",
+		"prefix": "imgr",
+		"description": "Insert a right-aligned blog image.",
+		"body": [
+			"<img class=\"img-right ${1|img-40,img-50,img-70|}\" src=\"${2}\" alt=\"${3}\" />"
+		]
+	},
+	"Blog Image Caption": {
+		"scope": "markdown,mdx",
+		"prefix": "imgcap",
+		"description": "Insert a blog image with a semantic caption.",
+		"body": [
+			"<figure class=\"img-figure img-center ${1|img-40,img-50,img-70|}\">",
+			"\t<img src=\"${2}\" alt=\"${3}\" />",
+			"\t<figcaption>${4}</figcaption>",
+			"</figure>"
+		]
+	},
+	"Blog Two Images": {
+		"scope": "markdown,mdx",
+		"prefix": "img2",
+		"description": "Insert two landscape images side by side with one group caption.",
+		"body": [
+			"<figure class=\"img-group img-crop-landscape\">",
+			"\t<div class=\"img-row-2\">",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${1}\" alt=\"${2}\" />",
+			"\t\t\t<figcaption>${3}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${4}\" alt=\"${5}\" />",
+			"\t\t\t<figcaption>${6}</figcaption>",
+			"\t\t</figure>",
+			"\t</div>",
+			"\t<figcaption>${7}</figcaption>",
+			"</figure>"
+		]
+	},
+	"Blog Two Portrait Images": {
+		"scope": "markdown,mdx",
+		"prefix": "img2v",
+		"description": "Insert two portrait images side by side with one group caption.",
+		"body": [
+			"<figure class=\"img-group img-crop-portrait\">",
+			"\t<div class=\"img-row-2\">",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${1}\" alt=\"${2}\" />",
+			"\t\t\t<figcaption>${3}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${4}\" alt=\"${5}\" />",
+			"\t\t\t<figcaption>${6}</figcaption>",
+			"\t\t</figure>",
+			"\t</div>",
+			"\t<figcaption>${7}</figcaption>",
+			"</figure>"
+		]
+	},
+	"Blog Two Square Images": {
+		"scope": "markdown,mdx",
+		"prefix": "img2s",
+		"description": "Insert two square images side by side with one group caption.",
+		"body": [
+			"<figure class=\"img-group img-crop-square\">",
+			"\t<div class=\"img-row-2\">",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${1}\" alt=\"${2}\" />",
+			"\t\t\t<figcaption>${3}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${4}\" alt=\"${5}\" />",
+			"\t\t\t<figcaption>${6}</figcaption>",
+			"\t\t</figure>",
+			"\t</div>",
+			"\t<figcaption>${7}</figcaption>",
+			"</figure>"
+		]
+	},
+	"Blog Three Images": {
+		"scope": "markdown,mdx",
+		"prefix": "img3",
+		"description": "Insert three landscape images side by side with one group caption.",
+		"body": [
+			"<figure class=\"img-group img-crop-landscape\">",
+			"\t<div class=\"img-row-3\">",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${1}\" alt=\"${2}\" />",
+			"\t\t\t<figcaption>${3}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${4}\" alt=\"${5}\" />",
+			"\t\t\t<figcaption>${6}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${7}\" alt=\"${8}\" />",
+			"\t\t\t<figcaption>${9}</figcaption>",
+			"\t\t</figure>",
+			"\t</div>",
+			"\t<figcaption>${10}</figcaption>",
+			"</figure>"
+		]
+	},
+	"Blog Three Portrait Images": {
+		"scope": "markdown,mdx",
+		"prefix": "img3v",
+		"description": "Insert three portrait images side by side with one group caption.",
+		"body": [
+			"<figure class=\"img-group img-crop-portrait\">",
+			"\t<div class=\"img-row-3\">",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${1}\" alt=\"${2}\" />",
+			"\t\t\t<figcaption>${3}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${4}\" alt=\"${5}\" />",
+			"\t\t\t<figcaption>${6}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${7}\" alt=\"${8}\" />",
+			"\t\t\t<figcaption>${9}</figcaption>",
+			"\t\t</figure>",
+			"\t</div>",
+			"\t<figcaption>${10}</figcaption>",
+			"</figure>"
+		]
+	},
+	"Blog Four Images": {
+		"scope": "markdown,mdx",
+		"prefix": "img4",
+		"description": "Insert four landscape images in a 2x2 grid with one group caption.",
+		"body": [
+			"<figure class=\"img-group img-crop-landscape\">",
+			"\t<div class=\"img-grid-4\">",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${1}\" alt=\"${2}\" />",
+			"\t\t\t<figcaption>${3}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${4}\" alt=\"${5}\" />",
+			"\t\t\t<figcaption>${6}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${7}\" alt=\"${8}\" />",
+			"\t\t\t<figcaption>${9}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${10}\" alt=\"${11}\" />",
+			"\t\t\t<figcaption>${12}</figcaption>",
+			"\t\t</figure>",
+			"\t</div>",
+			"\t<figcaption>${13}</figcaption>",
+			"</figure>"
+		]
+	},
+	"Blog Four Portrait Images": {
+		"scope": "markdown,mdx",
+		"prefix": "img4v",
+		"description": "Insert four portrait images in a 2x2 grid with one group caption.",
+		"body": [
+			"<figure class=\"img-group img-crop-portrait\">",
+			"\t<div class=\"img-grid-4\">",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${1}\" alt=\"${2}\" />",
+			"\t\t\t<figcaption>${3}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${4}\" alt=\"${5}\" />",
+			"\t\t\t<figcaption>${6}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${7}\" alt=\"${8}\" />",
+			"\t\t\t<figcaption>${9}</figcaption>",
+			"\t\t</figure>",
+			"\t\t<figure>",
+			"\t\t\t<img src=\"${10}\" alt=\"${11}\" />",
+			"\t\t\t<figcaption>${12}</figcaption>",
+			"\t\t</figure>",
+			"\t</div>",
+			"\t<figcaption>${13}</figcaption>",
+			"</figure>"
+		]
+	}
+}

@@ -8,8 +8,11 @@
 		"editor.quickSuggestions": {
 			"comments": "off",
 			"strings": "off",
-			"other": "off"
+			"other": "on"
 		},
-		"editor.minimap.enabled": false
+		"editor.minimap.enabled": false,
+		"editor.suggest.showSnippets": true,
+		"editor.snippetSuggestions": "top",
+		"editor.tabCompletion": "on"
 	}
 }

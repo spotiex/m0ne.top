@@ -46,7 +46,8 @@
 	}
 
 	.img-row-2,
-	.img-row-3 {
+	.img-row-3,
+	.img-grid-4 {
 		display: grid;
 		gap: 1rem;
 		align-items: start;
@@ -61,12 +62,100 @@
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 
+	.img-grid-4 {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
 	.img-row-2 img,
-	.img-row-3 img {
+	.img-row-3 img,
+	.img-grid-4 img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		object-fit: cover;
+	}
+
+	.img-row-2 figure,
+	.img-row-3 figure,
+	.img-grid-4 figure {
+		margin: 0;
+	}
+
+	.img-figure {
+		margin-top: 1.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.img-group {
+		margin-top: 1.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.img-group .img-row-2,
+	.img-group .img-row-3,
+	.img-group .img-grid-4 {
+		margin: 0;
+	}
+
+	.img-group.img-crop-landscape img,
+	.img-row-2 img,
+	.img-row-3 img,
+	.img-grid-4 img {
+		aspect-ratio: 4 / 3;
+	}
+
+	.img-group.img-crop-portrait img {
+		aspect-ratio: 3 / 4;
+	}
+
+	.img-group.img-crop-square img {
+		aspect-ratio: 1;
+	}
+
+	.img-figure img {
 		display: block;
 		width: 100%;
 		height: auto;
 		margin: 0;
+	}
+
+	.img-figure figcaption,
+	.img-row-2 figcaption,
+	.img-row-3 figcaption,
+	.img-grid-4 figcaption {
+		margin-top: 0.55rem;
+		text-align: center;
+		font-size: 0.875rem;
+		line-height: 1.6;
+		color: rgb(113 113 122);
+	}
+
+	.img-figure figcaption:empty,
+	.img-group figcaption:empty,
+	.img-row-2 figcaption:empty,
+	.img-row-3 figcaption:empty,
+	.img-grid-4 figcaption:empty {
+		display: none;
+	}
+
+	.img-group > figcaption {
+		margin-top: 0.7rem;
+		text-align: center;
+		font-size: 0.875rem;
+		line-height: 1.6;
+		color: rgb(113 113 122);
+	}
+
+	html.dark .img-figure figcaption,
+	html.dark .img-row-2 figcaption,
+	html.dark .img-row-3 figcaption,
+	html.dark .img-grid-4 figcaption {
+		color: rgb(161 161 170);
+	}
+
+	html.dark .img-group > figcaption {
+		color: rgb(161 161 170);
 	}
 
 	@media (max-width: 768px) {
@@ -77,8 +166,13 @@
 		}
 
 		.img-row-2,
-		.img-row-3 {
+		.img-row-3,
+		.img-grid-4 {
 			grid-template-columns: 1fr;
 		}
+	}
+
+	.img-group:not(:has(> figcaption:not(:empty))) + .img-group:not(:has(> figcaption:not(:empty))) {
+		margin-top: -0.5rem;
 	}
 }

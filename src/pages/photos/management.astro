@@ -1,4 +1,5 @@
 ---
+import '../../styles/global.css';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 import { isPhotoAdminAuthenticated, isPhotoAdminConfigured } from '../../lib/server/photoAdminAuth';
@@ -381,6 +382,7 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 			let localPreviewUrl = '';
 			let prepareRequestId = 0;
 			let preparedUploadTarget = null;
+			let newPhotoDraft = null;
 
 			const syncDuplicateHint = () => {
 				if (!(srcInput instanceof HTMLInputElement) || !(duplicateHint instanceof HTMLElement)) return false;
@@ -479,6 +481,49 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 				tags: tagsInput instanceof HTMLInputElement ? tagsInput.value.trim() : ''
 			});
 
+			const captureNewPhotoDraft = () => ({
+				photo: getCurrentPhoto(),
+				file: getSelectedFile(),
+				preparedUploadTarget
+			});
+
+			const restoreNewPhotoDraft = () => {
+				const draft = newPhotoDraft;
+				newPhotoDraft = null;
+				prepareRequestId += 1;
+				preparedUploadTarget = draft?.preparedUploadTarget ?? null;
+				workflowMode = 'new';
+				activeOriginalSrc = '';
+				clearLocalPreviewUrl();
+
+				if (fileInput instanceof HTMLInputElement) {
+					fileInput.value = '';
+				}
+				if (draft?.file instanceof File) {
+					setSelectedFile(draft.file);
+					localPreviewUrl = URL.createObjectURL(draft.file);
+				}
+
+				setInputValue(srcInput, draft?.photo?.src ?? '');
+				setInputValue(altInput, draft?.photo?.alt ?? '');
+				setInputValue(titleInput, draft?.photo?.title ?? '');
+				setInputValue(dateInput, draft?.photo?.date ?? '');
+				setInputValue(descriptionInput, draft?.photo?.description ?? '');
+				setInputValue(tagsInput, draft?.photo?.tags ?? '');
+
+				if (statusNode instanceof HTMLElement) {
+					statusNode.textContent = draft ? '已退出编辑，恢复之前的新照片草稿。' : '已退出编辑，可以录入新照片。';
+				}
+				if (uploadStatusNode instanceof HTMLElement) {
+					uploadStatusNode.textContent = '';
+				}
+
+				syncWorkflow();
+				syncFilePickerLabel();
+				syncPreview();
+				syncDuplicateHint();
+			};
+
 			const syncWorkflow = () => {
 				const isEditMode = workflowMode === 'edit';
 				const hasPersistedUrl = srcInput instanceof HTMLInputElement && srcInput.value.trim() !== '';
@@ -560,6 +605,9 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 			};
 
 			const loadPhotoForEdit = (photo) => {
+				if (workflowMode !== 'edit') {
+					newPhotoDraft = captureNewPhotoDraft();
+				}
 				prepareRequestId += 1;
 				preparedUploadTarget = null;
 				workflowMode = 'edit';
@@ -588,6 +636,7 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 			const clearEditor = ({ statusMessage = '已清除当前输入，可以录入新照片。' } = {}) => {
 				prepareRequestId += 1;
 				preparedUploadTarget = null;
+				newPhotoDraft = null;
 				form?.reset();
 				if (fileInput instanceof HTMLInputElement) {
 					fileInput.value = '';
@@ -754,6 +803,10 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 			});
 
 			clearButton?.addEventListener('click', () => {
+				if (workflowMode === 'edit') {
+					restoreNewPhotoDraft();
+					return;
+				}
 				clearEditor();
 			});
 
@@ -836,7 +889,7 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 				syncFilePickerLabel();
 				syncWorkflow();
 
-				uploadStatusNode.textContent = target?.key ? `上传完成：${target.key}` : '上传完成，URL 已填入。';
+				uploadStatusNode.textContent = '';
 				syncPreview();
 				syncDuplicateHint();
 				return target.url;
@@ -912,7 +965,6 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 					const successMessage = isUpdate
 						? (result?.indexUrl ? `已更新并写入 ${result.indexUrl}。` : '已更新 gallery JSON。')
 						: (result?.indexUrl ? `已上传并写入 ${result.indexUrl}。` : '已上传并保存到 gallery。');
-					statusNode.textContent = successMessage;
 					if (savedSrc && !normalizedExistingSources.includes(savedSrc)) {
 						normalizedExistingSources.push(savedSrc);
 					}
@@ -920,6 +972,7 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 						...savedItem,
 						src: savedSrc
 					});
+					window.alert(successMessage);
 					if (isUpdate) {
 						if (fileInput instanceof HTMLInputElement) {
 							fileInput.value = '';
@@ -928,11 +981,12 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 						activeOriginalSrc = savedSrc;
 						workflowMode = 'edit';
 						setInputValue(srcInput, savedSrc);
+						statusNode.textContent = '已完成，可继续编辑或选择其它最近项目。';
 						syncWorkflow();
 						syncFilePickerLabel();
 						syncPreview();
 					} else {
-						clearEditor({ statusMessage: successMessage });
+						clearEditor({ statusMessage: '已完成，可以继续录入下一张照片。' });
 					}
 				} catch (error) {
 					statusNode.textContent = error instanceof Error ? error.message : '保存失败。';
