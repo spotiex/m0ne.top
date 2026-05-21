@@ -130,8 +130,12 @@ const saveTracksCache = async (tracks: NeteaseTrack[]): Promise<void> => {
   }
 };
 
+let _refreshAttempted = false;
+
 const maybeRefreshLogin = async (cookie: string): Promise<void> => {
-  // 定时续期登录态，降低 Cookie 过期影响。
+  if (_refreshAttempted) return;
+  _refreshAttempted = true;
+
   const refreshIntervalHours = Number(import.meta.env.NETEASE_REFRESH_INTERVAL_HOURS ?? 12);
   const refreshIntervalMs = Math.max(1, refreshIntervalHours) * 60 * 60 * 1000;
 

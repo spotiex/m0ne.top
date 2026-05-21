@@ -10,7 +10,6 @@ import PostItem from '../components/PostItem.astro';
 import MusicPanel from '../components/MusicPanel.astro';
 import PhotoGalleryStrip from '../components/PhotoGalleryStrip.astro';
 import NotesPanel from '../components/NotesPanel.astro';
-import { getNeteaseTopTracks } from '@src/lib/music/netease';
 import SiteStats from '../components/SiteStats.astro';
 import { buildSiteStats } from '../lib/contentStats';
 import { getGalleryItems } from '../lib/server/gallery';
@@ -25,7 +24,6 @@ const fragments = (await getCollection('fragments')).sort(
 	(a: FragmentPost, b: FragmentPost) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
 const galleryItems = await getGalleryItems();
-const musicTracks = await getNeteaseTopTracks();
 const siteStats = buildSiteStats({
 	posts: allPosts,
 	fragments,
@@ -41,7 +39,7 @@ const heroLines = [
 ];
 ---
 
-<BaseLayout title={SITE_TITLE + ' - ' + SITE_TAGLINE} description={SITE_DESCRIPTION} globalMusicTracks={musicTracks}>
+<BaseLayout title={SITE_TITLE + ' - ' + SITE_TAGLINE} description={SITE_DESCRIPTION}>
 	<div class='container'>
 		<div class='w-full mb-12'>
 			<div class='text-pretty leading-9'>
@@ -105,7 +103,7 @@ const heroLines = [
 				<ProjectList projects={top6Projects} />
 			</div>
 			<div class='mt-12'>
-				<MusicPanel tracks={musicTracks} />
+				<MusicPanel tracks={[]} />
 			</div>
 		</main>
 

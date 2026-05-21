@@ -4,15 +4,11 @@ import Header from './components/Header.astro';
 import Footer from './components/Footer.astro';
 import GlobalMusicPlayer from '../components/GlobalMusicPlayer.astro';
 import { ClientRouter } from 'astro:transitions';
-import { getNeteaseTopTracks } from '@src/lib/music/netease';
 
 const GTAG_MEASUREMENT_ID = import.meta.env.GTAG_MEASUREMENT_ID ?? '';
 const { title, description, image, globalMusicTracks: passedGlobalMusicTracks = [] } = Astro.props;
 const isHome = Astro.url.pathname === '/';
-const globalMusicTracks =
-	Array.isArray(passedGlobalMusicTracks) && passedGlobalMusicTracks.length > 0
-		? passedGlobalMusicTracks
-		: await getNeteaseTopTracks();
+const globalMusicTracks = Array.isArray(passedGlobalMusicTracks) ? passedGlobalMusicTracks : [];
 ---
 
 <!doctype html>

@@ -3,6 +3,7 @@ import { getCollection, render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Prose from '../../components/Prose.astro';
 import TwikooComments from '../../components/TwikooComments.astro';
+import ProseLightbox from '../../components/ProseLightbox.astro';
 import { SITE_TITLE } from '../../consts';
 
 type Props = CollectionEntry<'fragments'>;
@@ -50,6 +51,7 @@ const fragmentMeta = [location, weather].filter(Boolean).join(' · ');
 		</article>
 	</div>
 </BaseLayout>
+<ProseLightbox ariaLabel='随笔图片预览' />
 
 <style>
 	.note-detail :global(p) {

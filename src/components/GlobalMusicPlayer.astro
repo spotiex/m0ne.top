@@ -2,7 +2,7 @@
 import type { NeteaseTrack } from '@src/lib/music/netease';
 
 interface Props {
-  tracks: NeteaseTrack[];
+  tracks?: NeteaseTrack[];
 }
 
 const { tracks = [] } = Astro.props as Props;
@@ -72,41 +72,38 @@ const firstTrack = tracks[0];
 				></audio>
 			</div>
 			<div class='music-list-wrap' data-music-list-wrap>
-				{
-					tracks.length === 0 ? (
-						<p class='px-2 py-1 text-xs text-zinc-600 dark:text-zinc-300'>暂无可播放歌曲，请检查网易云配置。</p>
-					) : (
-						<ul class='max-h-[340px] space-y-1 overflow-y-auto overflow-x-hidden' data-music-list>
-							{
-								tracks.map((track, index) => (
-									<li>
-										<button
-											class='music-trigger grid w-full grid-cols-[34px_1fr_auto] items-center gap-2 rounded-lg p-1.5 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-800'
-											data-url={track.playUrl}
-											data-name={track.name}
-											data-artist={track.artist}
-											data-id={track.id}
-											data-index={index}
-											aria-label={`播放 ${track.name}`}
-										>
-											<img
-												src={track.cover}
-												alt={track.name}
-												class='h-8 w-8 rounded-md border border-zinc-200 object-cover dark:border-zinc-600'
-												loading='lazy'
-											/>
-											<span class='min-w-0'>
-												<strong class='block truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100'>{track.name}</strong>
-												<span class='block truncate text-[11px] text-zinc-600 dark:text-zinc-300'>{track.artist}</span>
-											</span>
-											<time class='text-[11px] tabular-nums text-zinc-500 dark:text-zinc-300'>{track.duration}</time>
-										</button>
-									</li>
-								))
-							}
-						</ul>
-					)
-				}
+				<p class='px-2 py-1 text-xs text-zinc-600 dark:text-zinc-300' data-music-empty hidden={tracks.length > 0}>
+					歌单加载中。若长时间未出现，可点击刷新重新请求。
+				</p>
+				<ul class='max-h-[340px] space-y-1 overflow-y-auto overflow-x-hidden' data-music-list>
+					{
+						tracks.map((track, index) => (
+							<li>
+								<button
+									class='music-trigger grid w-full grid-cols-[34px_1fr_auto] items-center gap-2 rounded-lg p-1.5 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-800'
+									data-url={track.playUrl}
+									data-name={track.name}
+									data-artist={track.artist}
+									data-id={track.id}
+									data-index={index}
+									aria-label={`播放 ${track.name}`}
+								>
+									<img
+										src={track.cover}
+										alt={track.name}
+										class='h-8 w-8 rounded-md border border-zinc-200 object-cover dark:border-zinc-600'
+										loading='lazy'
+									/>
+									<span class='min-w-0'>
+										<strong class='block truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100'>{track.name}</strong>
+										<span class='block truncate text-[11px] text-zinc-600 dark:text-zinc-300'>{track.artist}</span>
+									</span>
+									<time class='text-[11px] tabular-nums text-zinc-500 dark:text-zinc-300'>{track.duration}</time>
+								</button>
+							</li>
+						))
+					}
+				</ul>
 			</div>
 		</div>
 	</div>
@@ -138,6 +135,7 @@ const firstTrack = tracks[0];
 		const cdImage = panel.querySelector('[data-cd-image]');
 		const miniCover = panel.querySelector('[data-mini-cover]');
 		const list = panel.querySelector('[data-music-list]');
+		const emptyMessage = panel.querySelector('[data-music-empty]');
 
 		let currentIndex = 0;
 		let lastSavedAt = 0;
@@ -167,6 +165,11 @@ const firstTrack = tracks[0];
 				if (cdImage) cdImage.setAttribute('src', cover);
 				if (miniCover) miniCover.setAttribute('src', cover);
 			}
+		};
+
+		const syncEmptyState = (hasTracks) => {
+			if (list) list.toggleAttribute('hidden', !hasTracks);
+			if (emptyMessage) emptyMessage.hidden = hasTracks;
 		};
 
 		const getCurrentTriggers = () => Array.from(panel.querySelectorAll('.music-trigger'));
@@ -281,6 +284,7 @@ const firstTrack = tracks[0];
 		};
 
 		let currentTriggers = bindTriggers();
+		syncEmptyState(currentTriggers.length > 0);
 
 		const playTrackByIndex = (index, autoPlay = true, toggleIfCurrent = false) => {
 			if (currentTriggers.length === 0) return;
@@ -328,8 +332,9 @@ const firstTrack = tracks[0];
 									</button>
 								</li>`,
 						)
-						.join('');
+							.join('');
 					currentTriggers = bindTriggers();
+					syncEmptyState(true);
 				}
 				const restoredIndex = Number(state?.currentIndex ?? 0);
 				playTrackByIndex(restoredIndex, false);
@@ -404,9 +409,10 @@ const firstTrack = tracks[0];
 								</button>
 							</li>`,
 						)
-						.join('');
+							.join('');
 				}
 				currentTriggers = bindTriggers();
+				syncEmptyState(tracks.length > 0);
 				currentIndex = 0;
 				if (tracks[0]) {
 					playTrackByIndex(0, wasPlaying);
@@ -416,6 +422,7 @@ const firstTrack = tracks[0];
 					audio.load();
 					if (titleText) titleText.textContent = '--';
 					if (artistText) artistText.textContent = '--';
+					setNowPlaying('--', '--', '');
 					saveState();
 				}
 				emitStateChange();

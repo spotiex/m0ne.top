@@ -12,6 +12,7 @@
     "packageJson": {
       "dependencies": [
         "npm:@astrojs/check@~0.9.4",
+        "npm:@astrojs/cloudflare@^12.6.13",
         "npm:@astrojs/markdown-remark@^6.3.1",
         "npm:@astrojs/mdx@^4.2.4",
         "npm:@astrojs/netlify@^6.6.4",
@@ -19,7 +20,6 @@
         "npm:@astrojs/rss@^4.0.11",
         "npm:@astrojs/sitemap@^3.3.0",
         "npm:@astrojs/tailwind@^6.0.2",
-        "npm:@aws-sdk/client-s3@^3.1017.0",
         "npm:@tailwindcss/typography@~0.5.14",
         "npm:NeteaseCloudMusicApi@^4.29.0",
         "npm:astro@^5.7.4",
