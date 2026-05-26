@@ -106,11 +106,17 @@
 	}
 
 	.img-group.img-crop-portrait img {
-		aspect-ratio: 3 / 4;
+		aspect-ratio: var(--img-portrait-ratio, 3 / 4);
 	}
 
 	.img-group.img-crop-square img {
 		aspect-ratio: 1;
+	}
+
+	.img-group.img-contain img {
+		height: auto;
+		aspect-ratio: auto;
+		object-fit: contain;
 	}
 
 	.img-figure img {

@@ -3,7 +3,7 @@ title: '可以用 Cloudflare 做些什么'
 slug: '2026-05-08-post'
 description: '数字时代的 Infra 创造者 Cloudflare'
 pubDate: '2026-05-08'
-tags: ['网络服务']
+tags: ['网络服务', '技术学习']
 ---
 
 ## 一、写在前面

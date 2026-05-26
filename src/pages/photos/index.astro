@@ -10,7 +10,6 @@ import { getImageUrl } from '../../lib/imageTransform';
 
 const galleryItems = await getGalleryItems();
 const archiveYears = getPhotoArchiveYears(galleryItems);
-const activeYear = null;
 const archiveLabel = '全部时间';
 const galleryTags = ['全部', ...new Set(galleryItems.flatMap((item) => item.tags ?? []))];
 ---

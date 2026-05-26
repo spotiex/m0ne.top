@@ -9,27 +9,27 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
+    "@astrojs/check": "^0.9.9",
     "@astrojs/cloudflare": "^12.6.13",
-    "@astrojs/markdown-remark": "^6.3.1",
-    "@astrojs/mdx": "^4.2.4",
-    "@astrojs/netlify": "^6.6.4",
-    "@astrojs/partytown": "^2.1.4",
-    "@astrojs/rss": "^4.0.11",
-    "@astrojs/sitemap": "^3.3.0",
+    "@astrojs/markdown-remark": "^6.3.11",
+    "@astrojs/mdx": "^4.3.14",
+    "@astrojs/netlify": "^6.6.5",
+    "@astrojs/partytown": "^2.1.7",
+    "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.2",
     "@astrojs/tailwind": "^6.0.2",
-    "astro": "^5.7.4",
-    "NeteaseCloudMusicApi": "^4.29.0",
+    "astro": "^5.18.1",
+    "NeteaseCloudMusicApi": "^4.32.0",
     "sharp": "^0.33.5",
-    "tailwindcss": "^3.4.10",
-    "twikoo": "^1.7.7",
+    "tailwindcss": "^3.4.19",
+    "twikoo": "^1.7.9",
     "typescript": "^5.5.4",
-    "unist-util-visit": "^5.0.0"
+    "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.14",
-    "prettier": "^3.3.3",
+    "@tailwindcss/typography": "^0.5.19",
+    "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
-    "vite": "^5.4.8"
+    "vite": "^5.4.21"
   }
 }

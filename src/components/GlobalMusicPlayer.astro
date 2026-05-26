@@ -112,7 +112,6 @@ const firstTrack = tracks[0];
 <script is:inline>
 	const STORAGE_KEY = 'global_music_player_state_v1';
 	const MAX_RESTORABLE_STATE_AGE_MS = 1000 * 60 * 30;
-	const HOME_PLAYLIST_SESSION_KEY = 'home_music_playlist_initialized_v1';
 	const panel = document.querySelector('[data-global-music-panel]');
 	if (panel && !panel.dataset.bound) {
 		panel.dataset.bound = '1';
@@ -369,71 +368,80 @@ const firstTrack = tracks[0];
 			if (window.location.pathname !== '/') return;
 
 			try {
-				if (sessionStorage.getItem(HOME_PLAYLIST_SESSION_KEY) === '1') return;
-				sessionStorage.setItem(HOME_PLAYLIST_SESSION_KEY, '1');
+				const raw = localStorage.getItem(STORAGE_KEY);
+				const cached = raw ? JSON.parse(raw) : null;
+				const isFresh = cached && Date.now() - Number(cached.updatedAt ?? 0) <= MAX_RESTORABLE_STATE_AGE_MS;
+				const hasPlaylist = Array.isArray(cached?.playlist) && cached.playlist.length > 0;
+				if (isFresh && hasPlaylist) return;
 				await refreshPlaylist();
 			} catch (error) {
-				sessionStorage.removeItem(HOME_PLAYLIST_SESSION_KEY);
 				console.error('[music] initial home playlist refresh failed', error);
 			}
 		};
 
+		let pendingRefresh = null;
+
 		const refreshPlaylist = async () => {
+			if (pendingRefresh) return pendingRefresh;
 			const wasPlaying = !!audio && !audio.paused;
 			refreshBtn?.setAttribute('disabled', 'true');
 			refreshBtn?.classList.add('is-loading');
-			try {
-				const res = await fetch('/api/music/random.json', { cache: 'no-store' });
-				if (!res.ok) throw new Error('failed');
-				const data = await res.json();
-				const tracks = Array.isArray(data?.tracks) ? data.tracks : [];
-				if (list) {
-					list.innerHTML = tracks
-						.map(
-							(track, index) => `
-							<li>
-								<button
-									class="music-trigger grid w-full grid-cols-[38px_1fr_auto] items-center gap-2 rounded-lg p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-									data-url="${escapeHTML(track.playUrl ?? '')}"
-									data-name="${escapeHTML(track.name ?? '')}"
-									data-artist="${escapeHTML(track.artist ?? '')}"
-									data-id="${escapeHTML(track.id ?? 0)}"
-									data-index="${index}"
-								>
-									<img src="${escapeHTML(track.cover ?? '')}" alt="${escapeHTML(track.name ?? '')}" class="h-9 w-9 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
-									<span class="min-w-0">
-										<strong class="block truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">${escapeHTML(track.name ?? '')}</strong>
-										<span class="block truncate text-[11px] text-zinc-600 dark:text-zinc-300">${escapeHTML(track.artist ?? '')}</span>
-									</span>
-									<time class="text-[11px] tabular-nums text-zinc-500 dark:text-zinc-300">${escapeHTML(track.duration ?? '')}</time>
-								</button>
-							</li>`,
-						)
-							.join('');
+			pendingRefresh = (async () => {
+				try {
+					const res = await fetch('/api/music/random.json', { cache: 'no-store' });
+					if (!res.ok) throw new Error('failed');
+					const data = await res.json();
+					const tracks = Array.isArray(data?.tracks) ? data.tracks : [];
+					if (list) {
+						list.innerHTML = tracks
+							.map(
+								(track, index) => `
+								<li>
+									<button
+										class="music-trigger grid w-full grid-cols-[38px_1fr_auto] items-center gap-2 rounded-lg p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+										data-url="${escapeHTML(track.playUrl ?? '')}"
+										data-name="${escapeHTML(track.name ?? '')}"
+										data-artist="${escapeHTML(track.artist ?? '')}"
+										data-id="${escapeHTML(track.id ?? 0)}"
+										data-index="${index}"
+									>
+										<img src="${escapeHTML(track.cover ?? '')}" alt="${escapeHTML(track.name ?? '')}" class="h-9 w-9 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
+										<span class="min-w-0">
+											<strong class="block truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">${escapeHTML(track.name ?? '')}</strong>
+											<span class="block truncate text-[11px] text-zinc-600 dark:text-zinc-300">${escapeHTML(track.artist ?? '')}</span>
+										</span>
+										<time class="text-[11px] tabular-nums text-zinc-500 dark:text-zinc-300">${escapeHTML(track.duration ?? '')}</time>
+									</button>
+								</li>`,
+							)
+								.join('');
+					}
+					currentTriggers = bindTriggers();
+					syncEmptyState(tracks.length > 0);
+					currentIndex = 0;
+					if (tracks[0]) {
+						playTrackByIndex(0, wasPlaying);
+					} else if (audio) {
+						audio.pause();
+						audio.removeAttribute('src');
+						audio.load();
+						if (titleText) titleText.textContent = '--';
+						if (artistText) artistText.textContent = '--';
+						setNowPlaying('--', '--', '');
+						saveState();
+					}
+					emitStateChange();
+					return getState();
+				} catch (error) {
+					console.error('[music] refresh failed', error);
+					throw error;
+				} finally {
+					refreshBtn?.removeAttribute('disabled');
+					refreshBtn?.classList.remove('is-loading');
+					pendingRefresh = null;
 				}
-				currentTriggers = bindTriggers();
-				syncEmptyState(tracks.length > 0);
-				currentIndex = 0;
-				if (tracks[0]) {
-					playTrackByIndex(0, wasPlaying);
-				} else if (audio) {
-					audio.pause();
-					audio.removeAttribute('src');
-					audio.load();
-					if (titleText) titleText.textContent = '--';
-					if (artistText) artistText.textContent = '--';
-					setNowPlaying('--', '--', '');
-					saveState();
-				}
-				emitStateChange();
-				return getState();
-			} catch (error) {
-				console.error('[music] refresh failed', error);
-				throw error;
-			} finally {
-				refreshBtn?.removeAttribute('disabled');
-				refreshBtn?.classList.remove('is-loading');
-			}
+			})();
+			return pendingRefresh;
 		};
 
 		window.__GLOBAL_MUSIC_PLAYER__ = {
