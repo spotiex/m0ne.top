@@ -11,26 +11,27 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@astrojs/check@~0.9.4",
+        "npm:@astrojs/check@~0.9.9",
         "npm:@astrojs/cloudflare@^12.6.13",
-        "npm:@astrojs/markdown-remark@^6.3.1",
-        "npm:@astrojs/mdx@^4.2.4",
-        "npm:@astrojs/netlify@^6.6.4",
-        "npm:@astrojs/partytown@^2.1.4",
-        "npm:@astrojs/rss@^4.0.11",
-        "npm:@astrojs/sitemap@^3.3.0",
+        "npm:@astrojs/markdown-remark@^6.3.11",
+        "npm:@astrojs/mdx@^4.3.14",
+        "npm:@astrojs/netlify@^6.6.5",
+        "npm:@astrojs/partytown@^2.1.7",
+        "npm:@astrojs/rss@^4.0.18",
+        "npm:@astrojs/sitemap@^3.7.2",
         "npm:@astrojs/tailwind@^6.0.2",
-        "npm:@tailwindcss/typography@~0.5.14",
-        "npm:NeteaseCloudMusicApi@^4.29.0",
-        "npm:astro@^5.7.4",
+        "npm:@tailwindcss/typography@~0.5.19",
+        "npm:NeteaseCloudMusicApi@^4.32.0",
+        "npm:astro@^5.18.1",
+        "npm:netlify-cli@^26.1.0",
         "npm:prettier-plugin-astro@~0.14.1",
-        "npm:prettier@^3.3.3",
+        "npm:prettier@^3.8.3",
         "npm:sharp@~0.33.5",
-        "npm:tailwindcss@^3.4.10",
-        "npm:twikoo@^1.7.7",
+        "npm:tailwindcss@^3.4.19",
+        "npm:twikoo@^1.7.9",
         "npm:typescript@^5.5.4",
-        "npm:unist-util-visit@5",
-        "npm:vite@^5.4.8"
+        "npm:unist-util-visit@^5.1.0",
+        "npm:vite@^5.4.21"
       ]
     }
   }

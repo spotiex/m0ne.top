@@ -18,7 +18,14 @@ const adapter = isCloudflare
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://m0ne.top',
-	integrations: [mdx(), sitemap(), tailwind(), partytown()],
+	integrations: [
+		mdx(),
+		sitemap({
+			filter: (page) => !page.endsWith('/photos/management.html')
+		}),
+		tailwind(),
+		partytown()
+	],
 	markdown: {
 		extendDefaultPlugins: true,
 		rehypePlugins: [

@@ -5,6 +5,7 @@ import Prose from '../../components/Prose.astro';
 import TwikooComments from '../../components/TwikooComments.astro';
 import ProseLightbox from '../../components/ProseLightbox.astro';
 import { SITE_TITLE } from '../../consts';
+import { countReadableText } from '../../lib/contentStats';
 
 type Props = CollectionEntry<'fragments'>;
 
@@ -20,6 +21,7 @@ const fragment = Astro.props as Props;
 const { Content } = await render(fragment);
 const { title, description, pubDate, location, weather } = fragment.data;
 const fragmentMeta = [location, weather].filter(Boolean).join(' · ');
+const fragmentWordCount = countReadableText(fragment.body).characterCount;
 ---
 
 <BaseLayout title={`${title} - ${SITE_TITLE}`} description={description}>
@@ -36,6 +38,8 @@ const fragmentMeta = [location, weather].filter(Boolean).join(' · ');
 				<div class='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
 					<h1 class='m-0 text-3xl font-semibold leading-tight'>{title}</h1>
 					<p class='m-0 shrink-0 text-sm text-zinc-500 dark:text-zinc-400 sm:pt-1 sm:text-right'>
+						<span>约 {fragmentWordCount} 字</span>
+						<span aria-hidden='true'> · </span>
 						<time>{pubDate.toLocaleDateString('zh-CN')}</time>
 						{fragmentMeta && <span> · {fragmentMeta}</span>}
 					</p>

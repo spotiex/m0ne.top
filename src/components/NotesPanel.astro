@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { countReadableText } from '../lib/contentStats';
 
 interface Props {
 	notes: CollectionEntry<'fragments'>[];
@@ -28,9 +29,12 @@ const { notes = [] } = Astro.props;
 							<p class='note-content'>{note.data.description}</p>
 							<div class='note-meta'>
 								<time>{note.data.pubDate.toLocaleDateString('zh-CN')}</time>
-								{(note.data.location || note.data.weather) && (
-									<span>{[note.data.location, note.data.weather].filter(Boolean).join(' · ')}</span>
-								)}
+								<div class='note-meta-right'>
+									<span>约 {countReadableText(note.body).characterCount} 字</span>
+									{(note.data.location || note.data.weather) && (
+										<span>{[note.data.location, note.data.weather].filter(Boolean).join(' · ')}</span>
+									)}
+								</div>
 							</div>
 						</a>
 					))
@@ -62,7 +66,9 @@ const { notes = [] } = Astro.props;
 
 	.note-card {
 		position: relative;
-		display: block;
+		display: flex;
+		min-height: 9.5rem;
+		flex-direction: column;
 		border-radius: 0.95rem;
 		padding: 1rem 1.05rem 0.95rem;
 		border: 1px solid rgb(228 228 231);
@@ -93,11 +99,20 @@ const { notes = [] } = Astro.props;
 
 	.note-meta {
 		display: flex;
+		margin-top: auto;
 		justify-content: space-between;
 		align-items: center;
 		font-size: 0.78rem;
 		color: rgb(113 113 122);
 		gap: 0.7rem;
+	}
+
+	.note-meta-right {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 0.5rem;
+		text-align: right;
 	}
 
 	.note-tone-0 {

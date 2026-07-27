@@ -678,4 +678,46 @@ const firstTrack = tracks[0];
 		transform: translateY(-50%) translateX(calc(100% + 24px));
 		visibility: hidden;
 	}
+
+	@media (max-width: 640px) {
+		.global-music-player {
+			top: auto;
+			right: 0;
+			bottom: 1rem;
+			width: min(calc(100vw - 0.75rem), 360px);
+			transform: translateX(calc(100% - 58px));
+		}
+
+		.global-music-player:hover,
+		.global-music-player:focus-within {
+			transform: translateX(0);
+		}
+
+		[data-global-music-panel] .cd-wrap {
+			width: 58px;
+			min-width: 58px;
+			gap: 8px;
+			padding-block: 8px;
+		}
+
+		[data-global-music-panel] .cd-tag {
+			min-width: 26px;
+			min-height: 76px;
+			font-size: 8px;
+		}
+
+		[data-global-music-panel] .cd-image {
+			width: 42px;
+			height: 42px;
+		}
+
+		[data-global-music-panel] .music-list-wrap {
+			max-height: 220px;
+			overflow-y: auto;
+		}
+
+		:global(body[data-home='true'] .global-music-player) {
+			transform: translateX(calc(100% + 16px));
+		}
+	}
 </style>

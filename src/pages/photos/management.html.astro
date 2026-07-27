@@ -753,7 +753,7 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 
 					if (requestId !== prepareRequestId) return;
 
-					if (!response.ok || !result?.url || !result?.uploadUrl || !result?.uploadHeaders) {
+					if (!response.ok || !result?.url || !result?.key) {
 						throw new Error(result?.error || '生成 URL 失败。');
 					}
 
@@ -854,47 +854,6 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 				void prepareSelectedFileUrl();
 			});
 
-			const uploadSelectedFile = async () => {
-				if (!(fileInput instanceof HTMLInputElement) || !(uploadStatusNode instanceof HTMLElement) || !(srcInput instanceof HTMLInputElement)) {
-					throw new Error('Upload controls are unavailable.');
-				}
-				const file = fileInput.files?.[0];
-				if (!file) {
-					throw new Error('请先选择一张本地图片。');
-				}
-				const target = preparedUploadTarget ?? await prepareSelectedFileUrl();
-				if (!target?.uploadUrl || !target?.url) {
-					throw new Error('未能生成上传地址。');
-				}
-
-				uploadStatusNode.textContent = '上传中...';
-
-				const response = await fetch(target.uploadUrl, {
-					method: 'PUT',
-					headers: target.uploadHeaders,
-					body: file
-				});
-
-				if (!response.ok) {
-					const message = await response.text().catch(() => '');
-					throw new Error(message || '上传失败。');
-				}
-
-				setInputValue(srcInput, target.url);
-				fileInput.value = '';
-				clearLocalPreviewUrl();
-				preparedUploadTarget = null;
-				activeOriginalSrc = '';
-				workflowMode = 'new';
-				syncFilePickerLabel();
-				syncWorkflow();
-
-				uploadStatusNode.textContent = '';
-				syncPreview();
-				syncDuplicateHint();
-				return target.url;
-			};
-
 			form?.addEventListener('submit', async (event) => {
 				event.preventDefault();
 				if (!(srcInput instanceof HTMLInputElement) || !(altInput instanceof HTMLInputElement) || !(titleInput instanceof HTMLInputElement) || !(dateInput instanceof HTMLInputElement) || !(descriptionInput instanceof HTMLTextAreaElement) || !(tagsInput instanceof HTMLInputElement) || !(statusNode instanceof HTMLElement)) {
@@ -907,18 +866,26 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 				}
 
 				const selectedFile = getSelectedFile();
-				if (workflowMode !== 'edit' && selectedFile) {
-					try {
-						statusNode.textContent = '上传图片中...';
-						await uploadSelectedFile();
-						statusNode.textContent = '图片已上传，正在写入 gallery JSON...';
-					} catch (error) {
-						statusNode.textContent = error instanceof Error ? error.message : '上传失败。';
+				const isEditMode = workflowMode === 'edit';
+				let uploadTarget = preparedUploadTarget;
+
+				if (!isEditMode) {
+					if (!selectedFile) {
+						statusNode.textContent = '请先选择一张本地图片。';
 						syncWorkflow();
 						return;
 					}
+
+					uploadTarget = uploadTarget ?? await prepareSelectedFileUrl();
+					if (!uploadTarget?.key || !uploadTarget?.url) {
+						statusNode.textContent = '未能生成上传地址。';
+						syncWorkflow();
+						return;
+					}
+
+					setInputValue(srcInput, uploadTarget.url);
 				} else if (!srcInput.value.trim()) {
-					statusNode.textContent = workflowMode === 'edit' ? '当前照片缺少 URL，无法保存。' : '请先选择一张本地图片。';
+					statusNode.textContent = '当前照片缺少 URL，无法保存。';
 					syncWorkflow();
 					return;
 				}
@@ -945,13 +912,33 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 				};
 
 				try {
-					const response = await fetch('/api/photos/add.json', {
-						method: 'POST',
-						headers: {
-							'content-type': 'application/json'
-						},
-						body: JSON.stringify(payload)
-					});
+					let response;
+					if (isEditMode) {
+						response = await fetch('/api/photos/add.json', {
+							method: 'POST',
+							headers: {
+								'content-type': 'application/json'
+							},
+							body: JSON.stringify(payload)
+						});
+					} else {
+						const formData = new FormData();
+						formData.set('image', selectedFile);
+						formData.set('uploadKey', uploadTarget.key);
+						formData.set('src', uploadTarget.url);
+						formData.set('originalSrc', payload.originalSrc);
+						formData.set('alt', payload.alt);
+						formData.set('title', payload.title);
+						formData.set('date', payload.date);
+						formData.set('description', payload.description);
+						formData.set('tags', tagsInput.value.trim());
+
+						statusNode.textContent = '上传图片并写入 gallery JSON...';
+						response = await fetch('/api/photos/add.json', {
+							method: 'POST',
+							body: formData
+						});
+					}
 
 					const result = await response.json();
 

@@ -3,7 +3,7 @@ import type { GalleryItem } from '../../../consts';
 import { getCurrentPhotoDate, normalizePhotoDate, parsePhotoDate } from '../../../lib/photoDate';
 import { normalizeGalleryItems } from '../../../lib/server/gallery';
 import { isPhotoAdminAuthenticated } from '../../../lib/server/photoAdminAuth';
-import { getGalleryIndexKey, getR2ObjectText, getR2PublicUrl, putR2Object } from '../../../lib/server/r2';
+import { getGalleryIndexKey, getImageObjectPrefix, getR2ObjectText, getR2PublicUrl, putR2Object } from '../../../lib/server/r2';
 
 export const prerender = false;
 
@@ -15,6 +15,12 @@ interface PhotoPayload {
 	date?: string;
 	description?: string;
 	tags?: string[];
+}
+
+interface PendingUpload {
+	key: string;
+	body: Buffer;
+	contentType: string;
 }
 
 const json = (body: unknown, status = 200) =>
@@ -38,17 +44,91 @@ const readGalleryItems = async () => {
 	}
 };
 
+const getFormString = (formData: FormData, name: string) => {
+	const value = formData.get(name);
+	return typeof value === 'string' ? value.trim() : '';
+};
+
+const isValidImageUploadKey = (key: string) => {
+	if (!key || key === getGalleryIndexKey()) return false;
+
+	const prefix = getImageObjectPrefix().replace(/^\/+|\/+$/g, '');
+	if (prefix && !key.startsWith(`${prefix}/`)) return false;
+
+	return /\.(?:avif|bmp|gif|jpe?g|png|tiff?|webp)$/i.test(key);
+};
+
+const readMultipartPayload = async (request: Request) => {
+	const formData = await request.formData();
+	const image = formData.get('image');
+	const uploadKey = getFormString(formData, 'uploadKey');
+	const submittedSrc = getFormString(formData, 'src');
+
+	if (!(image instanceof File) || image.size <= 0) {
+		throw new Error('image is required.');
+	}
+
+	const contentType = image.type || 'application/octet-stream';
+	if (!contentType.startsWith('image/')) {
+		throw new Error('Only image files can be uploaded.');
+	}
+
+	if (!isValidImageUploadKey(uploadKey)) {
+		throw new Error('uploadKey is invalid.');
+	}
+
+	const src = getR2PublicUrl(uploadKey);
+	if (submittedSrc && submittedSrc !== src) {
+		throw new Error('src does not match uploadKey.');
+	}
+
+	const tags = getFormString(formData, 'tags')
+		.split(/[,，]/)
+		.map((tag) => tag.trim())
+		.filter(Boolean);
+	const body = Buffer.from(await image.arrayBuffer());
+
+	return {
+		payload: {
+			src,
+			originalSrc: getFormString(formData, 'originalSrc'),
+			alt: getFormString(formData, 'alt'),
+			title: getFormString(formData, 'title'),
+			date: getFormString(formData, 'date'),
+			description: getFormString(formData, 'description'),
+			tags
+		},
+		pendingUpload: {
+			key: uploadKey,
+			body,
+			contentType
+		}
+	};
+};
+
 export const POST: APIRoute = async ({ cookies, request }) => {
 	if (!isPhotoAdminAuthenticated(cookies)) {
 		return json({ error: 'Authentication required.' }, 401);
 	}
 
 	let payload: PhotoPayload;
+	let pendingUpload: PendingUpload | null = null;
 
 	try {
-		payload = await request.json();
-	} catch {
-		return json({ error: 'Invalid JSON payload.' }, 400);
+		if (request.headers.get('content-type')?.includes('multipart/form-data')) {
+			const multipart = await readMultipartPayload(request);
+			payload = multipart.payload;
+			pendingUpload = multipart.pendingUpload;
+		} else {
+			payload = await request.json();
+		}
+	} catch (error) {
+		return json(
+			{
+				error: error instanceof Error ? error.message : 'Invalid payload.'
+			},
+			400
+		);
 	}
 
 	const src = payload.src?.trim();
@@ -85,6 +165,10 @@ export const POST: APIRoute = async ({ cookies, request }) => {
 
 		if (photos.some((photo, index) => photo.src.trim() === src && index !== editIndex)) {
 			return json({ error: 'This src already exists in gallery index.' }, 409);
+		}
+
+		if (pendingUpload) {
+			await putR2Object(pendingUpload);
 		}
 
 		const item: GalleryItem = { src, alt, title, date, description, tags };

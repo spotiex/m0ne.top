@@ -10,6 +10,7 @@ import TwikooComments from '../components/TwikooComments.astro';
 import ProseLightbox from '../components/ProseLightbox.astro';
 import { getTagHref } from '../lib/tags';
 import { render } from 'astro:content';
+import { countReadableText } from '../lib/contentStats';
 
 export async function getStaticPaths() {
 	const posts = await getCollection('blog');
@@ -26,12 +27,13 @@ const {
 const { Content, headings } = await render(post);
 const hasToc = Array.isArray(headings) && headings.some((heading: any) => heading?.depth === 2);
 const coverImageUrl = typeof coverImage === 'string' ? coverImage : coverImage?.src;
+const postWordCount = countReadableText(post.body).characterCount;
 ---
 
 <BaseLayout title={seoTitle || title} description={description} image={coverImageUrl || undefined}>
-	<div class='container lg:flex gap-10'>
+	<div class='container gap-10 lg:flex'>
 		<main
-			class='overflow-hidden grow'
+			class='min-w-0 grow overflow-hidden'
 		>
 			<article>
 				<Prose>
@@ -44,9 +46,9 @@ const coverImageUrl = typeof coverImage === 'string' ? coverImage : coverImage?.
 							<span>返回 Posts</span>
 						</a>
 						<h1 class='!my-1 !font-semibold leading-tight'>{title}</h1>
-            <div class='text-sm font-[500] mt-2 sm:mt-0 py-1 md:text-right flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center'>
+            <div class='mt-2 flex flex-col gap-3 py-1 text-sm font-[500] sm:mt-0 sm:flex-row sm:items-center sm:justify-between md:text-right'>
               {
-                <div class='flex gap-2'>
+                <div class='flex min-w-0 flex-wrap gap-2'>
                   {
                     (tags || [] )?.map((tag: string) => (
                       <a
@@ -61,7 +63,9 @@ const coverImageUrl = typeof coverImage === 'string' ? coverImage : coverImage?.
                   }
                 </div>
               }
-              <div>
+              <div class='flex min-w-0 flex-wrap items-center gap-2 sm:justify-end'>
+                <span>约 {postWordCount} 字</span>
+                <span aria-hidden='true'>·</span>
                 {
                   updatedDate ?
                     <>Updated on <strong><FormattedDate date={updatedDate} /></strong></>
@@ -71,11 +75,11 @@ const coverImageUrl = typeof coverImage === 'string' ? coverImage : coverImage?.
               </div>
             </div>
 					</div>
-	        <div class='py-3 overflow-hidden'>
+	        <div class='overflow-hidden py-3'>
 	            {coverImage && (
 	              typeof coverImage === 'string'
-	                ? <img class='rounded-3xl w-full m-0 lg:mb-2' src={coverImage} alt={title} loading='eager' />
-	                : <Image class='rounded-3xl w-full m-0 lg:mb-2' src={coverImage} alt={title} loading='eager' />
+	                ? <img class='m-0 w-full rounded-xl sm:rounded-3xl lg:mb-2' src={coverImage} alt={title} loading='eager' />
+	                : <Image class='m-0 w-full rounded-xl sm:rounded-3xl lg:mb-2' src={coverImage} alt={title} loading='eager' />
 	            )}
 	          </div>
 					<Content />

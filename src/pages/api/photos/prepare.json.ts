@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { isPhotoAdminAuthenticated } from '../../../lib/server/photoAdminAuth';
-import { createBrowserUploadTarget } from '../../../lib/server/r2';
+import { getImageUploadTarget } from '../../../lib/server/r2';
 
 export const prerender = false;
 
@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
 	}
 
 	try {
-		const target = createBrowserUploadTarget({
+		const target = getImageUploadTarget({
 			name: filename,
 			type: contentType
 		});
