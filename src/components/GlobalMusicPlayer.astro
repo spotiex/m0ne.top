@@ -379,13 +379,9 @@ const firstTrack = tracks[0];
 
 		const maybeInitHomePlaylist = async () => {
 			if (window.location.pathname !== '/') return;
+			if (currentTriggers.length > 0) return;
 
 			try {
-				const raw = localStorage.getItem(STORAGE_KEY);
-				const cached = raw ? JSON.parse(raw) : null;
-				const isFresh = cached && Date.now() - Number(cached.updatedAt ?? 0) <= MAX_RESTORABLE_STATE_AGE_MS;
-				const hasPlaylist = Array.isArray(cached?.playlist) && cached.playlist.length > 0;
-				if (isFresh && hasPlaylist) return;
 				await refreshPlaylist();
 			} catch (error) {
 				console.error('[music] initial home playlist refresh failed', error);
@@ -516,6 +512,7 @@ const firstTrack = tracks[0];
 		});
 
 		refreshBtn?.addEventListener('click', refreshPlaylist);
+		document.addEventListener('astro:page-load', maybeInitHomePlaylist);
 		maybeInitHomePlaylist();
 
 	}

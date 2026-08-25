@@ -8,6 +8,8 @@ export const getImageUrl = (src: string, width: number, quality = 80): string =>
     return src;
   }
 
+  if (parsed.hostname === 'img.20020315.xyz') return src;
+
   const params = `width=${width},quality=${quality},format=auto`;
   parsed.pathname = `/cdn-cgi/image/${params}${parsed.pathname}`;
   return parsed.toString();
