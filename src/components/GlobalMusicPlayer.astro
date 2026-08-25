@@ -86,6 +86,7 @@ const firstTrack = tracks[0];
 									data-artist={track.artist}
 									data-id={track.id}
 									data-index={index}
+									aria-pressed={index === 0 ? 'true' : 'false'}
 									aria-label={`播放 ${track.name}`}
 								>
 									<img
@@ -172,6 +173,14 @@ const firstTrack = tracks[0];
 		};
 
 		const getCurrentTriggers = () => Array.from(panel.querySelectorAll('.music-trigger'));
+
+		const syncActiveTriggers = () => {
+			currentTriggers.forEach((trigger, index) => {
+				const isActive = index === currentIndex;
+				trigger.classList.toggle('is-active', isActive);
+				trigger.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+			});
+		};
 
 		const buildPlaylistSnapshot = () =>
 			getCurrentTriggers().map((trigger, index) => ({
@@ -266,6 +275,7 @@ const firstTrack = tracks[0];
 			}
 			if (audio.src !== url) audio.src = url;
 			currentIndex = Number.isFinite(index) ? index : 0;
+			syncActiveTriggers();
 			if (name && artist) setNowPlaying(name, artist, cover);
 			if (autoPlay) audio.play().catch(() => {});
 			saveState();
@@ -284,6 +294,7 @@ const firstTrack = tracks[0];
 
 		let currentTriggers = bindTriggers();
 		syncEmptyState(currentTriggers.length > 0);
+		syncActiveTriggers();
 
 		const playTrackByIndex = (index, autoPlay = true, toggleIfCurrent = false) => {
 			if (currentTriggers.length === 0) return;
@@ -321,6 +332,7 @@ const firstTrack = tracks[0];
 										data-artist="${escapeHTML(track.artist ?? '')}"
 										data-id="${escapeHTML(track.id ?? 0)}"
 										data-index="${index}"
+										aria-pressed="false"
 									>
 										<img src="${escapeHTML(track.cover ?? '')}" alt="${escapeHTML(track.name ?? '')}" class="h-9 w-9 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
 										<span class="min-w-0">
@@ -334,6 +346,7 @@ const firstTrack = tracks[0];
 							.join('');
 					currentTriggers = bindTriggers();
 					syncEmptyState(true);
+					syncActiveTriggers();
 				}
 				const restoredIndex = Number(state?.currentIndex ?? 0);
 				playTrackByIndex(restoredIndex, false);
@@ -404,6 +417,7 @@ const firstTrack = tracks[0];
 										data-artist="${escapeHTML(track.artist ?? '')}"
 										data-id="${escapeHTML(track.id ?? 0)}"
 										data-index="${index}"
+										aria-pressed="false"
 									>
 										<img src="${escapeHTML(track.cover ?? '')}" alt="${escapeHTML(track.name ?? '')}" class="h-9 w-9 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
 										<span class="min-w-0">
@@ -419,6 +433,7 @@ const firstTrack = tracks[0];
 					currentTriggers = bindTriggers();
 					syncEmptyState(tracks.length > 0);
 					currentIndex = 0;
+					syncActiveTriggers();
 					if (tracks[0]) {
 						playTrackByIndex(0, wasPlaying);
 					} else if (audio) {
@@ -509,6 +524,22 @@ const firstTrack = tracks[0];
 <style is:global>
 	[data-global-music-panel] audio {
 		accent-color: #52525b;
+	}
+
+	[data-global-music-panel] .music-trigger {
+		border: 1px solid transparent;
+	}
+
+	[data-global-music-panel] .music-trigger.is-active {
+		border-color: rgb(161 161 170);
+		background: rgb(244 244 245);
+		box-shadow: inset 0 0 0 1px rgb(228 228 231);
+	}
+
+	[data-global-music-panel] .music-trigger:focus-visible {
+		outline: none;
+		border-color: rgb(113 113 122);
+		box-shadow: 0 0 0 3px rgb(228 228 231);
 	}
 
 	[data-global-music-panel] .cd-wrap {
@@ -637,6 +668,17 @@ const firstTrack = tracks[0];
 		accent-color: #a1a1aa;
 		background-color: #18181b;
 		border-radius: 9999px;
+	}
+
+	.dark [data-global-music-panel] .music-trigger.is-active {
+		border-color: rgb(82 82 91);
+		background: rgb(39 39 42);
+		box-shadow: inset 0 0 0 1px rgb(63 63 70);
+	}
+
+	.dark [data-global-music-panel] .music-trigger:focus-visible {
+		border-color: rgb(161 161 170);
+		box-shadow: 0 0 0 3px rgb(63 63 70);
 	}
 
 	.dark [data-global-music-panel] audio::-webkit-media-controls-enclosure {

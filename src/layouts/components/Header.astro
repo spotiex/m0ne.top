@@ -7,9 +7,8 @@ import GithubBlack from '@src/assets/img/github-mark.svg';
 import XiaohongshuBlack from '@src/assets/img/xiaohongshu-mark-black.svg';
 import { GITHUB_PROFILE_URL, XIAOHONGSHU_PROFILE_URL } from '@src/consts';
 
-
 const menu = [
-  {
+	{
 		link: '/about/',
 		label: '关于我'
 	},
@@ -32,22 +31,17 @@ const menu = [
 	{
 		link: '/tags/',
 		label: '标签'
-	},
+	}
 ];
 ---
 
-<header
-	id='site-header'
-	class:list={[
-		'flex items-center w-full transition duration-300 z-[999] border-[var(--soft-border-color)]'
-	]}
->
+<header id='site-header' class:list={['flex items-center w-full transition duration-300 z-[999] border-[var(--soft-border-color)]']}>
 	<div class='container'>
 		<nav class='flex gap-4 items-center justify-between py-3'>
 			<h2 class='m-0'>
 				<a href='/' class='flex gap-4 items-center text-xl font-black uppercase'>
 					<!-- You can use your site logo, rounded ava or simply your site name here-->
-          <Image src={liukanshan} alt='Your site name' class="rounded-full w-11 border-white border-2 shadow-lg"/> 
+					<Image src={liukanshan} alt='Your site name' class='rounded-full w-11 border-white border-2 shadow-lg' />
 					<!-- {SITE_TITLE} -->
 				</a>
 			</h2>
@@ -68,70 +62,202 @@ const menu = [
 				>
 					<Image src={XiaohongshuBlack} width={24} height={24} alt='小红书 logo' class='dark:invert' />
 				</a>
-				<button class='p-3' id='themeToggle' aria-label='Theme mode'>
-					<svg
-						class='sun'
-						xmlns='http://www.w3.org/2000/svg'
-						width='24'
-						height='24'
-						viewBox='0 0 24 24'
-						fill='none'
-						stroke='currentColor'
-						stroke-width='2'
-						stroke-linecap='round'
-						stroke-linejoin='round'
-						class='lucide lucide-sun'
-						><circle cx='12' cy='12' r='4'></circle><path d='M12 2v2'></path><path d='M12 20v2'></path><path d='m4.93 4.93 1.41 1.41'
-						></path><path d='m17.66 17.66 1.41 1.41'></path><path d='M2 12h2'></path><path d='M20 12h2'></path><path
-							d='m6.34 17.66-1.41 1.41'></path><path d='m19.07 4.93-1.41 1.41'></path></svg
+				<div class='relative' data-theme-picker>
+					<button
+						type='button'
+						class='p-3 transition hover:text-zinc-600 dark:hover:text-zinc-300'
+						data-theme-toggle
+						aria-label='主题设置'
+						aria-haspopup='menu'
+						aria-expanded='false'
+						aria-controls='theme-menu'
 					>
-					<svg
-						class='moon'
-						xmlns='http://www.w3.org/2000/svg'
-						width='24'
-						height='24'
-						viewBox='0 0 24 24'
-						fill='none'
-						stroke='currentColor'
-						stroke-width='2'
-						stroke-linecap='round'
-						stroke-linejoin='round'
-						class='lucide lucide-moon'
+						<svg
+							data-theme-icon='system'
+							xmlns='http://www.w3.org/2000/svg'
+							width='24'
+							height='24'
+							viewBox='0 0 24 24'
+							fill='none'
+							stroke='currentColor'
+							stroke-width='2'
+							stroke-linecap='round'
+							stroke-linejoin='round'
+							class='lucide lucide-monitor-cog'
+							><path d='M12 17v4'></path><path d='m15.2 4.9-.9-.4'></path><path d='m15.2 7.1-.9.4'></path><path d='m16.9 3.2-.4-.9'
+							></path><path d='m16.9 8.8-.4.9'></path><path d='m19.5 2.3-.4.9'></path><path d='m19.5 9.7-.4-.9'></path><path
+								d='m21.7 4.5-.9.4'></path><path d='m21.7 7.5-.9-.4'></path><circle cx='18' cy='6' r='3'></circle><path
+								d='M22 12v3a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7'></path><path d='M8 21h8'></path></svg
+						>
+						<svg
+							data-theme-icon='light'
+							xmlns='http://www.w3.org/2000/svg'
+							width='24'
+							height='24'
+							viewBox='0 0 24 24'
+							fill='none'
+							stroke='currentColor'
+							stroke-width='2'
+							stroke-linecap='round'
+							stroke-linejoin='round'
+							class='lucide lucide-sun'
+							><circle cx='12' cy='12' r='4'></circle><path d='M12 2v2'></path><path d='M12 20v2'></path><path d='m4.93 4.93 1.41 1.41'
+							></path><path d='m17.66 17.66 1.41 1.41'></path><path d='M2 12h2'></path><path d='M20 12h2'></path><path
+								d='m6.34 17.66-1.41 1.41'></path><path d='m19.07 4.93-1.41 1.41'></path></svg
+						>
+						<svg
+							data-theme-icon='dark'
+							xmlns='http://www.w3.org/2000/svg'
+							width='24'
+							height='24'
+							viewBox='0 0 24 24'
+							fill='none'
+							stroke='currentColor'
+							stroke-width='2'
+							stroke-linecap='round'
+							stroke-linejoin='round'
+							class='lucide lucide-moon'><path d='M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'></path></svg
+						>
+					</button>
+					<div
+						id='theme-menu'
+						class='absolute right-0 top-full z-[1000] mt-1 w-36 overflow-hidden rounded-md border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900'
+						data-theme-menu
+						role='menu'
+						aria-label='主题模式'
+						hidden
 					>
-						<path d='M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'></path></svg
-					>
-				</button>
+						<button type='button' class='theme-option' data-theme-option='system' role='menuitemradio' aria-checked='false'>
+							<svg
+								xmlns='http://www.w3.org/2000/svg'
+								width='16'
+								height='16'
+								viewBox='0 0 24 24'
+								fill='none'
+								stroke='currentColor'
+								stroke-width='2'
+								stroke-linecap='round'
+								stroke-linejoin='round'
+								class='lucide lucide-monitor'
+								><rect width='20' height='14' x='2' y='3' rx='2'></rect><line x1='8' x2='16' y1='21' y2='21'></line><line
+									x1='12'
+									x2='12'
+									y1='17'
+									y2='21'></line></svg
+							>
+							<span>跟随系统</span>
+						</button>
+						<button type='button' class='theme-option' data-theme-option='light' role='menuitemradio' aria-checked='false'>
+							<svg
+								xmlns='http://www.w3.org/2000/svg'
+								width='16'
+								height='16'
+								viewBox='0 0 24 24'
+								fill='none'
+								stroke='currentColor'
+								stroke-width='2'
+								stroke-linecap='round'
+								stroke-linejoin='round'
+								class='lucide lucide-sun'
+								><circle cx='12' cy='12' r='4'></circle><path d='M12 2v2'></path><path d='M12 20v2'></path><path d='m4.93 4.93 1.41 1.41'
+								></path><path d='m17.66 17.66 1.41 1.41'></path><path d='M2 12h2'></path><path d='M20 12h2'></path><path
+									d='m6.34 17.66-1.41 1.41'></path><path d='m19.07 4.93-1.41 1.41'></path></svg
+							>
+							<span>亮色</span>
+						</button>
+						<button type='button' class='theme-option' data-theme-option='dark' role='menuitemradio' aria-checked='false'>
+							<svg
+								xmlns='http://www.w3.org/2000/svg'
+								width='16'
+								height='16'
+								viewBox='0 0 24 24'
+								fill='none'
+								stroke='currentColor'
+								stroke-width='2'
+								stroke-linecap='round'
+								stroke-linejoin='round'
+								class='lucide lucide-moon'><path d='M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'></path></svg
+							>
+							<span>暗色</span>
+						</button>
+					</div>
+				</div>
 			</div>
 		</nav>
-    <div class='fixed top-3 left-1/2 z-[999] w-[calc(100vw-1rem)] max-w-full -translate-x-1/2 px-0 sm:w-auto sm:px-3'>
-      <div class="site-nav-scroll flex overflow-x-auto rounded-full border bg-white/90 px-2.5 leading-tight backdrop-blur-md dark:border-zinc-700 dark:bg-zinc-900/75">
-        <div class="shrink-0 px-2.5 text-sm">
-          <HeaderLink class="py-3 flex items-center" href="/" aria-label="Home">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-          </HeaderLink>
-        </div>
-        {
-          menu.map((item) => (
-            <div class='shrink-0 px-2.5 text-sm'>
-              <HeaderLink class="flex items-center whitespace-nowrap py-3" href={item.link}>
-                {item.label}
-              </HeaderLink>
-            </div>
-          ))
-        }
-      </div>
-    </div>
+		<div class='fixed top-3 left-1/2 z-[999] w-[calc(100vw-1rem)] max-w-full -translate-x-1/2 px-0 sm:w-auto sm:px-3'>
+			<div
+				class='site-nav-scroll flex overflow-x-auto rounded-full border bg-white/90 px-2.5 leading-tight backdrop-blur-md dark:border-zinc-700 dark:bg-zinc-900/75'
+			>
+				<div class='shrink-0 px-2.5 text-sm'>
+					<HeaderLink class='py-3 flex items-center' href='/' aria-label='Home'>
+						<svg
+							xmlns='http://www.w3.org/2000/svg'
+							width='20'
+							height='20'
+							viewBox='0 0 24 24'
+							fill='none'
+							stroke='currentColor'
+							stroke-width='1.7'
+							stroke-linecap='round'
+							stroke-linejoin='round'
+							class='lucide lucide-house'
+							><path d='M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8'></path><path
+								d='M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'
+							></path></svg
+						>
+					</HeaderLink>
+				</div>
+				{
+					menu.map((item) => (
+						<div class='shrink-0 px-2.5 text-sm'>
+							<HeaderLink class='flex items-center whitespace-nowrap py-3' href={item.link}>
+								{item.label}
+							</HeaderLink>
+						</div>
+					))
+				}
+			</div>
+		</div>
 	</div>
 
 	<style is:global>
-		#themeToggle .moon {
+		[data-theme-icon] {
 			display: none;
 		}
-		.dark #themeToggle .sun {
-			display: none;
-		}
-		.dark #themeToggle .moon {
+		html[data-theme-mode='system'] [data-theme-icon='system'],
+		html[data-theme-mode='light'] [data-theme-icon='light'],
+		html[data-theme-mode='dark'] [data-theme-icon='dark'] {
 			display: block;
+		}
+		[data-theme-menu][hidden] {
+			display: none;
+		}
+		.theme-option {
+			display: grid;
+			width: 100%;
+			grid-template-columns: 16px minmax(0, 1fr);
+			align-items: center;
+			gap: 0.5rem;
+			border-radius: 0.25rem;
+			padding: 0.5rem;
+			text-align: left;
+			font-size: 0.875rem;
+		}
+		.theme-option:hover,
+		.theme-option:focus-visible {
+			background: rgb(244 244 245);
+			outline: none;
+		}
+		.theme-option[aria-checked='true'] {
+			background: rgb(228 228 231);
+			font-weight: 600;
+		}
+		.dark .theme-option:hover,
+		.dark .theme-option:focus-visible {
+			background: rgb(39 39 42);
+		}
+		.dark .theme-option[aria-checked='true'] {
+			background: rgb(63 63 70);
 		}
 		.site-nav-scroll {
 			scrollbar-width: none;
@@ -141,65 +267,4 @@ const menu = [
 			display: none;
 		}
 	</style>
-
-	<script is:inline>
-		// 将小时数映射为主题：白天用亮色，夜间用暗色。
-		const getThemeByHour = (hour) => (hour >= 7 && hour < 19 ? 'light' : 'dark');
-
-		// 统一应用主题，避免多处直接操作 class。
-		const applyTheme = (theme) => {
-			if (theme === 'light') {
-				document.documentElement.classList.remove('dark');
-			} else {
-				document.documentElement.classList.add('dark');
-			}
-		};
-
-		// 通过 IP 地理接口获取时区，再按当地小时判断主题。
-		const detectThemeFromIpTimezone = async () => {
-			try {
-				const res = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
-				if (!res.ok) return null;
-				const data = await res.json();
-				const timezone = data?.timezone;
-				if (!timezone) return null;
-				const hourText = new Intl.DateTimeFormat('en-US', {
-					hour: '2-digit',
-					hour12: false,
-					timeZone: timezone
-				}).format(new Date());
-				const hour = Number(hourText);
-				if (!Number.isFinite(hour)) return null;
-				return getThemeByHour(hour);
-			} catch {
-				return null;
-			}
-		};
-
-		// 初始化优先级：手动设置 > 系统偏好（首屏兜底）> IP 时区自动判断。
-		const savedTheme = typeof localStorage !== 'undefined' ? localStorage.getItem('theme') : null;
-		if (savedTheme === 'light' || savedTheme === 'dark') {
-			applyTheme(savedTheme);
-		} else {
-			const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-			applyTheme(systemTheme);
-			detectThemeFromIpTimezone().then((ipTheme) => {
-				if (!ipTheme) return;
-				const latestSaved = localStorage.getItem('theme');
-				if (latestSaved) return;
-				applyTheme(ipTheme);
-			});
-		}
-
-		const handleToggleClick = () => {
-			const element = document.documentElement;
-			element.classList.toggle('dark');
-
-			const isDark = element.classList.contains('dark');
-			localStorage.setItem('theme', isDark ? 'dark' : 'light');
-		};
-		document.addEventListener('astro:page-load', () => {
-			document.getElementById('themeToggle')?.addEventListener('click', handleToggleClick);
-		});
-	</script>
 </header>

@@ -3,7 +3,7 @@ title: '留所的假期'
 description: '高温假第一天，工位零星的学生，我不在科研'
 pubDate: '2026-07-27'
 tags: ['']
-location: '北京海淀'
+location: '北京 海淀'
 weather: '晴'
 ---
 

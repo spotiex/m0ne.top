@@ -1,0 +1,126 @@
+<script is:inline>
+	(() => {
+		if (window.__THEME_CONTROLLER__) {
+			window.__THEME_CONTROLLER__.refresh();
+			return;
+		}
+
+		const STORAGE_KEY = 'theme';
+		const root = document.documentElement;
+		const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+		const readMode = () => {
+			try {
+				const stored = localStorage.getItem(STORAGE_KEY);
+				return stored === 'light' || stored === 'dark' ? stored : 'system';
+			} catch {
+				return 'system';
+			}
+		};
+
+		const syncControls = () => {
+			const mode = root.dataset.themeMode ?? 'system';
+			document.querySelectorAll('[data-theme-option]').forEach((option) => {
+				const isSelected = option.getAttribute('data-theme-option') === mode;
+				option.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+			});
+		};
+
+		const applyMode = (mode) => {
+			const normalizedMode = mode === 'light' || mode === 'dark' ? mode : 'system';
+			const isDark = normalizedMode === 'dark' || (normalizedMode === 'system' && systemTheme.matches);
+			root.classList.toggle('dark', isDark);
+			root.dataset.themeMode = normalizedMode;
+			root.style.colorScheme = isDark ? 'dark' : 'light';
+			syncControls();
+		};
+
+		const setMode = (mode) => {
+			try {
+				if (mode === 'light' || mode === 'dark') {
+					localStorage.setItem(STORAGE_KEY, mode);
+				} else {
+					localStorage.removeItem(STORAGE_KEY);
+				}
+			} catch {
+				// Theme still applies for the current page when storage is unavailable.
+			}
+			applyMode(mode);
+		};
+
+		const closeMenus = () => {
+			document.querySelectorAll('[data-theme-picker]').forEach((picker) => {
+				const menu = picker.querySelector('[data-theme-menu]');
+				const toggle = picker.querySelector('[data-theme-toggle]');
+				if (menu) menu.hidden = true;
+				if (toggle) toggle.setAttribute('aria-expanded', 'false');
+			});
+		};
+
+		window.__THEME_CONTROLLER__ = {
+			getMode: () => root.dataset.themeMode ?? 'system',
+			setMode,
+			refresh: () => applyMode(readMode())
+		};
+
+		applyMode(readMode());
+
+		const handleSystemThemeChange = () => {
+			if ((root.dataset.themeMode ?? 'system') === 'system') applyMode('system');
+		};
+		systemTheme.addEventListener('change', handleSystemThemeChange);
+
+		window.addEventListener('storage', (event) => {
+			if (event.key === STORAGE_KEY) applyMode(readMode());
+		});
+
+		document.addEventListener('click', (event) => {
+			const target = event.target instanceof Element ? event.target : null;
+			if (!target) return;
+
+			const option = target.closest('[data-theme-option]');
+			if (option) {
+				setMode(option.getAttribute('data-theme-option'));
+				closeMenus();
+				option.closest('[data-theme-picker]')?.querySelector('[data-theme-toggle]')?.focus();
+				return;
+			}
+
+			const toggle = target.closest('[data-theme-toggle]');
+			if (toggle) {
+				const picker = toggle.closest('[data-theme-picker]');
+				const menu = picker?.querySelector('[data-theme-menu]');
+				if (!menu) return;
+				const shouldOpen = menu.hidden;
+				closeMenus();
+				menu.hidden = !shouldOpen;
+				toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+				if (shouldOpen) menu.querySelector('[aria-checked="true"]')?.focus();
+				return;
+			}
+
+			if (!target.closest('[data-theme-picker]')) closeMenus();
+		});
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') {
+				const openToggle = document.querySelector('[data-theme-toggle][aria-expanded="true"]');
+				closeMenus();
+				openToggle?.focus();
+				return;
+			}
+
+			if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+			const currentOption = event.target instanceof Element ? event.target.closest('[data-theme-option]') : null;
+			if (!currentOption) return;
+			const options = Array.from(currentOption.closest('[data-theme-menu]')?.querySelectorAll('[data-theme-option]') ?? []);
+			const currentIndex = options.indexOf(currentOption);
+			if (currentIndex < 0) return;
+			event.preventDefault();
+			const offset = event.key === 'ArrowDown' ? 1 : -1;
+			options[(currentIndex + offset + options.length) % options.length]?.focus();
+		});
+
+		document.addEventListener('astro:page-load', syncControls);
+	})();
+</script>

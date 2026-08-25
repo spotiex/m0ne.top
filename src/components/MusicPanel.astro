@@ -49,7 +49,7 @@ const normalizeDurationLabel = (value: string) => {
       tracks.map((track, index) => (
         <li>
           <button
-            class="music-trigger grid w-full grid-cols-[52px_1fr_auto] items-center gap-3 rounded-xl p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-700"
+            class="music-trigger grid w-full grid-cols-[52px_minmax(0,1fr)_6.5rem] items-center gap-3 rounded-xl p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-700"
             data-url={track.playUrl}
             data-name={track.name}
             data-artist={track.artist}
@@ -59,11 +59,11 @@ const normalizeDurationLabel = (value: string) => {
             aria-label={`播放 ${track.name}`}
           >
             <img src={track.cover} alt={track.name} class="h-12 w-12 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
-            <span>
-              <strong class="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{track.name}</strong>
+            <span class="min-w-0">
+              <strong class="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">{track.name}</strong>
               <span class="block text-xs text-zinc-600 dark:text-zinc-300">{track.artist}</span>
             </span>
-            <time class="text-xs tabular-nums text-zinc-500 dark:text-zinc-300">{normalizeDurationLabel(track.duration)}</time>
+            <time class="text-right text-xs tabular-nums text-zinc-500 dark:text-zinc-300">{normalizeDurationLabel(track.duration)}</time>
           </button>
         </li>
       ))
@@ -119,6 +119,8 @@ const normalizeDurationLabel = (value: string) => {
           .replaceAll("'", '&#39;');
 
       const syncActiveTrigger = () => {
+        const playbackState = window.__GLOBAL_MUSIC_PLAYER__?.getState?.();
+        const playbackTime = Number(playbackState?.currentTime ?? 0);
         currentTriggers.forEach((trigger, index) => {
           const triggerId = Number(trigger.getAttribute('data-id') ?? '0');
           const isActive = (currentTrackId > 0 && triggerId === currentTrackId) || (currentTrackId <= 0 && index === currentIndex);
@@ -126,9 +128,9 @@ const normalizeDurationLabel = (value: string) => {
           trigger.setAttribute('aria-pressed', isActive ? 'true' : 'false');
           const durationText = trigger.querySelector('time');
           const playlistTrack = currentPlaylist[index];
+          const currentTime = isActive ? playbackTime : 0;
           if (durationText) {
             if (isActive) {
-              const currentTime = Number(window.__GLOBAL_MUSIC_PLAYER__?.getState?.()?.currentTime ?? 0);
               durationText.textContent = `${formatTime(currentTime)} / ${normalizeDurationLabel(playlistTrack?.duration ?? '0:00')}`;
             } else {
               durationText.textContent = normalizeDurationLabel(playlistTrack?.duration ?? '0:00');
@@ -174,7 +176,7 @@ const normalizeDurationLabel = (value: string) => {
             (track, index) => `
               <li>
                 <button
-                  class="music-trigger grid w-full grid-cols-[52px_1fr_auto] items-center gap-3 rounded-xl p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                  class="music-trigger grid w-full grid-cols-[52px_minmax(0,1fr)_6.5rem] items-center gap-3 rounded-xl p-2 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-700"
                   data-url="${escapeHTML(track.playUrl ?? '')}"
                   data-name="${escapeHTML(track.name ?? '')}"
                   data-artist="${escapeHTML(track.artist ?? '')}"
@@ -184,11 +186,11 @@ const normalizeDurationLabel = (value: string) => {
                   aria-label="播放 ${escapeHTML(track.name ?? '')}"
                 >
                   <img src="${escapeHTML(track.cover ?? '')}" alt="${escapeHTML(track.name ?? '')}" class="h-12 w-12 rounded-md border border-zinc-200 object-cover dark:border-zinc-600" loading="lazy" />
-                  <span>
-                    <strong class="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">${escapeHTML(track.name ?? '')}</strong>
+                  <span class="min-w-0">
+                    <strong class="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">${escapeHTML(track.name ?? '')}</strong>
                     <span class="block text-xs text-zinc-600 dark:text-zinc-300">${escapeHTML(track.artist ?? '')}</span>
                   </span>
-                  <time class="text-xs tabular-nums text-zinc-500 dark:text-zinc-300">${escapeHTML(normalizeDurationLabel(track.duration ?? '0:00'))}</time>
+                  <time class="text-right text-xs tabular-nums text-zinc-500 dark:text-zinc-300">${escapeHTML(normalizeDurationLabel(track.duration ?? '0:00'))}</time>
                 </button>
               </li>`,
           )
