@@ -149,7 +149,6 @@ Photo gallery and admin console:
 | `IMAGEPORT_S3_ACCESS_KEY_ID` | Yes | R2 access key |
 | `IMAGEPORT_S3_SECRET_ACCESS_KEY` | Yes | R2 secret key |
 | `IMAGEPORT_S3_PUBLIC_URL` | Yes | Public base URL for photo objects |
-| `IMAGEPORT_IMAGE_TRANSFORM_ENABLED` | No | Set to `true` only when the public image domain supports Cloudflare `/cdn-cgi/image` transformations |
 | `IMAGEPORT_GALLERY_INDEX_KEY` | No | Gallery JSON key, defaults to `gallery.json` |
 | `IMAGEPORT_IMAGE_PREFIX` | No | Optional object prefix for uploaded images |
 | `IMAGEPORT_S3_PREFIX` | No | Fallback image prefix if `IMAGEPORT_IMAGE_PREFIX` is not set |
