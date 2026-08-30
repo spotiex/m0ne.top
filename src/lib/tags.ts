@@ -73,6 +73,8 @@ const sectionMeta: Array<Omit<TagSection, 'tags'>> = [
 
 export const tagSectionMeta = sectionMeta;
 
+export const getVisibleTags = (tags: string[] | undefined) => (tags ?? []).map((tag) => tag.trim()).filter((tag) => tag.length > 0);
+
 const hasTag = (tags: string[] | undefined, value: string) => (tags ?? []).some((tag) => slugify(tag) === value);
 
 export const getTagHref = (tag: string, sectionKey?: TagSectionKey) => {
@@ -143,12 +145,12 @@ export const getTaggedContent = async (tagValue?: string): Promise<TaggedContent
 						: toSortedTags(photoTags)
 	}));
 
-		return {
-			blogPosts: tagValue ? blogPosts.filter((post) => hasTag(post.data.tags, tagValue)) : blogPosts,
-			fragments: tagValue ? fragments.filter((fragment) => hasTag(fragment.data.tags, tagValue)) : fragments,
-			projects: tagValue ? projects.filter((project) => hasTag(project.tags, tagValue)) : projects,
-			photos: tagValue ? galleryItems.filter((photo) => hasTag(photo.tags, tagValue)) : galleryItems,
-			sections,
-			allTags: mergeAllTags(sections)
-		};
+	return {
+		blogPosts: tagValue ? blogPosts.filter((post) => hasTag(post.data.tags, tagValue)) : blogPosts,
+		fragments: tagValue ? fragments.filter((fragment) => hasTag(fragment.data.tags, tagValue)) : fragments,
+		projects: tagValue ? projects.filter((project) => hasTag(project.tags, tagValue)) : projects,
+		photos: tagValue ? galleryItems.filter((photo) => hasTag(photo.tags, tagValue)) : galleryItems,
+		sections,
+		allTags: mergeAllTags(sections)
+	};
 };

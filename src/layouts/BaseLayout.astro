@@ -4,7 +4,7 @@ import Header from './components/Header.astro';
 import Footer from './components/Footer.astro';
 import ThemeController from './components/ThemeController.astro';
 import GlobalMusicPlayer from '../components/GlobalMusicPlayer.astro';
-import { ClientRouter } from 'astro:transitions';
+import { ClientRouter, fade } from 'astro:transitions';
 
 const GTAG_MEASUREMENT_ID = import.meta.env.GTAG_MEASUREMENT_ID ?? '';
 const { title, description, image, globalMusicTracks: passedGlobalMusicTracks = [] } = Astro.props;
@@ -21,12 +21,12 @@ const globalMusicTracks = Array.isArray(passedGlobalMusicTracks) ? passedGlobalM
 	</head>
 	<body
 		data-home={isHome ? 'true' : 'false'}
-		class="bg-white dark:bg-zinc-900 dark:text-zinc-100 pt-16 sm:pt-0"
+		class="pt-16 dark:text-zinc-100 sm:pt-0"
 	>
 		<Header/>
-		<div class='py-8 min-h-[calc(100vh-160px)]'>
+		<main class='min-h-[calc(100vh-160px)] py-8' transition:animate={fade({ duration: 160 })}>
 			<slot />
-		</div>
+		</main>
 		<Footer />
 		<GlobalMusicPlayer tracks={globalMusicTracks} />
 		<script is:inline>
@@ -59,3 +59,34 @@ const globalMusicTracks = Array.isArray(passedGlobalMusicTracks) ? passedGlobalM
     }
 	</body>
 </html>
+
+<style is:global>
+	body {
+		background-color: rgb(255 255 255);
+	}
+
+	body[data-home='false'] {
+		background-image:
+			linear-gradient(rgb(24 24 27 / 0.045) 1px, transparent 1px),
+			linear-gradient(90deg, rgb(24 24 27 / 0.045) 1px, transparent 1px);
+		background-size: 12px 12px;
+		background-position: center top;
+	}
+
+	html.dark body {
+		background-color: rgb(24 24 27);
+		background-image: none;
+	}
+
+	html.dark body[data-home='false'] {
+		background-image:
+			linear-gradient(rgb(244 244 245 / 0.045) 1px, transparent 1px),
+			linear-gradient(90deg, rgb(244 244 245 / 0.045) 1px, transparent 1px);
+	}
+
+	@media (min-width: 640px) {
+		body {
+			background-size: 12px 12px;
+		}
+	}
+</style>

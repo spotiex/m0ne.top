@@ -40,9 +40,7 @@ const menu = [
 		<nav class='flex gap-4 items-center justify-between py-3'>
 			<h2 class='m-0'>
 				<a href='/' class='flex gap-4 items-center text-xl font-black uppercase'>
-					<!-- You can use your site logo, rounded ava or simply your site name here-->
 					<Image src={liukanshan} alt='Your site name' class='rounded-full w-11 border-white border-2 shadow-lg' />
-					<!-- {SITE_TITLE} -->
 				</a>
 			</h2>
 			<div class='flex'>
@@ -189,7 +187,7 @@ const menu = [
 				class='site-nav-scroll flex overflow-x-auto rounded-full border bg-white/90 px-2.5 leading-tight backdrop-blur-md dark:border-zinc-700 dark:bg-zinc-900/75'
 			>
 				<div class='shrink-0 px-2.5 text-sm'>
-					<HeaderLink class='py-3 flex items-center' href='/' aria-label='Home'>
+					<HeaderLink class='py-3 flex items-center' href='/' aria-label='首页'>
 						<svg
 							xmlns='http://www.w3.org/2000/svg'
 							width='20'
@@ -224,6 +222,7 @@ const menu = [
 		[data-theme-icon] {
 			display: none;
 		}
+		html:not([data-theme-mode]) [data-theme-icon='system'],
 		html[data-theme-mode='system'] [data-theme-icon='system'],
 		html[data-theme-mode='light'] [data-theme-icon='light'],
 		html[data-theme-mode='dark'] [data-theme-icon='dark'] {

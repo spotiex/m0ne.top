@@ -8,7 +8,7 @@ import AboutTheAuthor from '../components/widgets/AboutTheAuthor.astro';
 import TableOfContent from '../components/widgets/TableOfContent.astro';
 import TwikooComments from '../components/TwikooComments.astro';
 import ProseLightbox from '../components/ProseLightbox.astro';
-import { getTagHref } from '../lib/tags';
+import { getTagHref, getVisibleTags } from '../lib/tags';
 import { render } from 'astro:content';
 import { countReadableText } from '../lib/contentStats';
 
@@ -28,6 +28,7 @@ const { Content, headings } = await render(post);
 const hasToc = Array.isArray(headings) && headings.some((heading: any) => heading?.depth === 2);
 const coverImageUrl = typeof coverImage === 'string' ? coverImage : coverImage?.src;
 const postWordCount = countReadableText(post.body).characterCount;
+const visibleTags = getVisibleTags(tags);
 ---
 
 <BaseLayout title={seoTitle || title} description={description} image={coverImageUrl || undefined}>
@@ -47,10 +48,10 @@ const postWordCount = countReadableText(post.body).characterCount;
 						</a>
 						<h1 class='!my-1 !font-semibold leading-tight'>{title}</h1>
             <div class='mt-2 flex flex-col gap-3 py-1 text-sm font-[500] sm:mt-0 sm:flex-row sm:items-center sm:justify-between md:text-right'>
-              {
+              {visibleTags.length > 0 && (
                 <div class='flex min-w-0 flex-wrap gap-2'>
                   {
-                    (tags || [] )?.map((tag: string) => (
+                    visibleTags.map((tag: string) => (
                       <a
                         class='border border-zinc-300 dark:border-zinc-700 rounded-2xl
                           text-sm text-zinc-700 dark:text-zinc-300 no-underline px-2 py-0.5
@@ -62,7 +63,7 @@ const postWordCount = countReadableText(post.body).characterCount;
                     ))
                   }
                 </div>
-              }
+              )}
               <div class='flex min-w-0 flex-wrap items-center gap-2 sm:justify-end'>
                 <span>约 {postWordCount} 字</span>
                 <span aria-hidden='true'>·</span>

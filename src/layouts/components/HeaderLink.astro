@@ -6,14 +6,47 @@ type Props = HTMLAttributes<'a'>;
 const { href, class: className, ...props } = Astro.props;
 
 const { pathname } = Astro.url;
-const subpath = pathname.match(/[^\/]+/g);
-const isActive = href === pathname || href === '/' + subpath?.[0];
+const normalizePath = (value: string) => (value === '/' ? '/' : value.replace(/\/+$/, ''));
+const normalizedHref = normalizePath(String(href ?? '/'));
+const normalizedPathname = normalizePath(pathname);
+const isActive =
+	normalizedHref === '/'
+		? normalizedPathname === '/'
+		: normalizedPathname === normalizedHref || normalizedPathname.startsWith(`${normalizedHref}/`);
 ---
 
 <a
 	href={href}
-	class:list={[className, { 'border-b border-zinc-500 dark:border-zinc-300': isActive }, { 'text-zinc-600 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-zinc-50': !isActive }, { 'text-zinc-950 dark:text-zinc-50': isActive }]}
+	aria-current={isActive ? 'page' : undefined}
+	class:list={[
+		className,
+		'relative',
+		{ 'text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-zinc-50': !isActive },
+		{ 'text-zinc-950 dark:text-zinc-50': isActive }
+	]}
 	{...props}
 >
 	<slot />
+	{
+		isActive && (
+			<span
+				aria-hidden='true'
+				class='absolute inset-x-0 bottom-0 h-px bg-zinc-500 dark:bg-zinc-300'
+				style='view-transition-name: active-nav-indicator;'
+			/>
+		)
+	}
 </a>
+
+<style is:global>
+	::view-transition-group(active-nav-indicator) {
+		animation-duration: 180ms;
+		animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		::view-transition-group(active-nav-indicator) {
+			animation-duration: 1ms;
+		}
+	}
+</style>

@@ -6,8 +6,8 @@
 		}
 
 		const STORAGE_KEY = 'theme';
-		const root = document.documentElement;
 		const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+		const getRoot = () => document.documentElement;
 
 		const readMode = () => {
 			try {
@@ -19,6 +19,7 @@
 		};
 
 		const syncControls = () => {
+			const root = getRoot();
 			const mode = root.dataset.themeMode ?? 'system';
 			document.querySelectorAll('[data-theme-option]').forEach((option) => {
 				const isSelected = option.getAttribute('data-theme-option') === mode;
@@ -27,6 +28,7 @@
 		};
 
 		const applyMode = (mode) => {
+			const root = getRoot();
 			const normalizedMode = mode === 'light' || mode === 'dark' ? mode : 'system';
 			const isDark = normalizedMode === 'dark' || (normalizedMode === 'system' && systemTheme.matches);
 			root.classList.toggle('dark', isDark);
@@ -58,7 +60,7 @@
 		};
 
 		window.__THEME_CONTROLLER__ = {
-			getMode: () => root.dataset.themeMode ?? 'system',
+			getMode: () => getRoot().dataset.themeMode ?? 'system',
 			setMode,
 			refresh: () => applyMode(readMode())
 		};
@@ -66,7 +68,7 @@
 		applyMode(readMode());
 
 		const handleSystemThemeChange = () => {
-			if ((root.dataset.themeMode ?? 'system') === 'system') applyMode('system');
+			if ((getRoot().dataset.themeMode ?? 'system') === 'system') applyMode('system');
 		};
 		systemTheme.addEventListener('change', handleSystemThemeChange);
 
@@ -121,6 +123,6 @@
 			options[(currentIndex + offset + options.length) % options.length]?.focus();
 		});
 
-		document.addEventListener('astro:page-load', syncControls);
+		document.addEventListener('astro:page-load', () => applyMode(readMode()));
 	})();
 </script>

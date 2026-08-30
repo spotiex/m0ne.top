@@ -1,89 +1,203 @@
 ---
 import { Image } from 'astro:assets';
-import type { Project } from '../data/projects';
-import { kFormatter } from '../utils';
-import GithubWhite from '@src/assets/img/github-mark-white.svg';
 import GithubBlack from '@src/assets/img/github-mark.svg';
-import { getTagHref } from '../lib/tags';
+import GithubWhite from '@src/assets/img/github-mark-white.svg';
+import type { Project } from '../data/projects';
+import { getTagHref, getVisibleTags } from '../lib/tags';
+
+interface Props {
+	projects: Project[];
+}
 
 const { projects } = Astro.props;
 ---
 
 <div class='grid grid-cols-12 gap-5'>
 	{
-		projects.map((project: Project) => (
-			<div class='col-span-12 sm:col-span-6 lg:col-span-4 border dark:border-zinc-700 rounded-xl shadow-sm p-5'>
-				<div class='flex justify-between items-center'>
-					<div class='flex gap-2'>
-						{(project.tags || [])?.map((tag: string) => (
-							<a
-								class='border border-zinc-300 dark:border-zinc-700 rounded-2xl
-                    text-sm text-zinc-700 dark:text-zinc-300 no-underline px-2 py-0.5
-                    transition-all duration-700
-                  hover:border-zinc-700 dark:hover:border-zinc-300'
-								href={getTagHref(tag, 'projects')}
-							>
-								{tag}
-							</a>
-						))}
+		projects.map((project) => {
+			const visibleTags = getVisibleTags(project.tags);
+			return (
+				<article class='project-card col-span-12 flex min-h-0 flex-col overflow-hidden rounded-2xl md:col-span-6 md:min-h-[21rem] lg:col-span-4'>
+					<header class='relative z-10 flex items-center gap-3 border-b border-zinc-200 p-4 dark:border-zinc-700 sm:gap-4 sm:p-5'>
+						<Image
+							src={project.logo || GithubBlack}
+							width={64}
+							height={64}
+							alt={project.logo ? `${project.name} logo` : `${project.name} GitHub logo`}
+							class:list={[
+								'h-14 w-14 shrink-0 rounded-xl border border-zinc-200 bg-white object-contain p-1.5 shadow-sm dark:border-zinc-700 sm:h-16 sm:w-16 sm:rounded-2xl',
+								{ 'dark:invert': !project.logo }
+							]}
+						/>
+						<div class='min-w-0'>
+							<h3 class='m-0 break-words text-base font-semibold leading-snug tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-lg'>
+								<a
+									class='no-underline transition-colors hover:text-zinc-600 dark:hover:text-zinc-300'
+									href={project.demoLink}
+									target='_blank'
+									rel={project.demoLinkRel}
+								>
+									{project.name}
+								</a>
+							</h3>
+							<p class='mt-1 line-clamp-2 text-sm leading-5 text-zinc-500 dark:text-zinc-400'>{project.summary}</p>
+						</div>
+					</header>
+
+					<div class='relative z-10 flex flex-1 flex-col p-4 sm:p-5'>
+						<p class='max-w-none text-sm leading-6 text-zinc-700 dark:text-zinc-300 sm:max-w-[34ch]'>
+							{project.description}
+						</p>
+
+						<div class='mt-auto pt-4'>
+							{project.postLink && (
+								<a
+									class='mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-700 no-underline hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white'
+									href={project.postLink}
+								>
+									阅读相关文章 <span aria-hidden='true'>→</span>
+								</a>
+							)}
+							{visibleTags.length > 0 && (
+								<div class='flex flex-wrap gap-2'>
+									{visibleTags.map((tag) => (
+										<a
+											class='rounded-lg border border-zinc-300 bg-white/60 px-2.5 py-1 text-xs font-medium text-zinc-600 no-underline transition-colors hover:border-zinc-500 hover:text-zinc-950 dark:border-zinc-600 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:border-zinc-400 dark:hover:text-white'
+											href={getTagHref(tag, 'projects')}
+										>
+											{tag}
+										</a>
+									))}
+								</div>
+							)}
+						</div>
 					</div>
 
-					{project.stargazers_count !== undefined && (
-						<div class='shrink-0'>
-							<a
-								href={project.html_url}
-								target='_blank'
-								class='border border-zinc-300 dark:border-zinc-700 rounded-2xl
-                    text-xs text-zinc-700 dark:text-zinc-300 no-underline px-2 py-0.5
-                    transition-all duration-700
-                  hover:border-zinc-700 dark:hover:border-zinc-300
-                    flex items-center gap-1
-              '
-							>
-								<Image src={GithubBlack} height={12} class='dark:hidden' alt='Github stars' />
-								<Image src={GithubWhite} height={12} class='hidden dark:block' alt='Github stars' />
-								{kFormatter(project.stargazers_count)} stars
-							</a>
-						</div>
-					)}
-				</div>
-				<h3 class='font-semibold my-2'>
-					<a class='underline' href={project.demoLink} target='_blank' rel={project.demoLinkRel}>
-						{project.name}
-					</a>
-				</h3>
-				<div class='line-clamp-2 text-zinc-600 dark:text-zinc-300 mb-4 min-h-[50px]'>
-					<p>{project.description}</p>
-				</div>
-				<div class='flex justify-end gap-3'>
-					{project.postLink && (
-						<a class='underline flex items-center gap-2' href={project.postLink}>
-							Article
-						</a>
-					)}
-					{project.demoLink && (
-						<a class='underline flex items-center gap-2' href={project.demoLink} target='_blank' rel={project.demoLinkRel}>
-							Demo
+					<footer class='relative z-10 border-t border-zinc-200 p-4 dark:border-zinc-700 sm:p-5'>
+						<a
+							class='flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-3 py-2.5 text-sm font-medium text-white no-underline transition-colors hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white dark:focus-visible:ring-offset-zinc-900 sm:min-h-12 sm:px-4 sm:py-3'
+							href={project.html_url}
+							target='_blank'
+							rel='noopener noreferrer'
+						>
+							<Image src={GithubWhite} width={18} height={18} alt='' class='dark:invert' />
+							<span>在 GitHub 查看</span>
 							<svg
-								xmlns='http://www.w3.org/2000/svg'
-								width='14'
-								height='14'
+								aria-hidden='true'
+								width='15'
+								height='15'
 								viewBox='0 0 24 24'
 								fill='none'
 								stroke='currentColor'
 								stroke-width='2'
 								stroke-linecap='round'
 								stroke-linejoin='round'
-								class='lucide lucide-external-link'
 							>
 								<path d='M15 3h6v6' />
 								<path d='M10 14 21 3' />
 								<path d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6' />
 							</svg>
 						</a>
-					)}
-				</div>
-			</div>
-		))
+					</footer>
+				</article>
+			);
+		})
 	}
 </div>
+
+<script>
+	const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+	function initializeProjectCards() {
+		if (!finePointer.matches) return;
+
+		document.querySelectorAll<HTMLElement>('.project-card:not([data-pointer-light])').forEach((card) => {
+			card.dataset.pointerLight = 'true';
+			card.addEventListener('pointermove', (event) => {
+				const bounds = card.getBoundingClientRect();
+				card.style.setProperty('--pointer-x', `${event.clientX - bounds.left}px`);
+				card.style.setProperty('--pointer-y', `${event.clientY - bounds.top}px`);
+			});
+		});
+	}
+
+	initializeProjectCards();
+	document.addEventListener('astro:page-load', initializeProjectCards);
+</script>
+
+<style>
+	.project-card {
+		--pointer-x: 50%;
+		--pointer-y: 50%;
+		position: relative;
+		isolation: isolate;
+		border: 1px solid rgb(228 228 231);
+		background: rgb(255 255 255 / 0.76);
+		box-shadow: 0 8px 24px rgb(24 24 27 / 0.05);
+		transition:
+			border-color 180ms ease,
+			box-shadow 180ms ease,
+			background-color 180ms ease;
+	}
+
+	.project-card::before {
+		content: '';
+		position: absolute;
+		inset: -1px;
+		z-index: 0;
+		padding: 1px;
+		border-radius: inherit;
+		background: radial-gradient(240px circle at var(--pointer-x) var(--pointer-y), rgb(20 184 166 / 0.9), transparent 72%);
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 180ms ease;
+		-webkit-mask:
+			linear-gradient(#fff 0 0) content-box,
+			linear-gradient(#fff 0 0);
+		-webkit-mask-composite: xor;
+		mask-composite: exclude;
+	}
+
+	.project-card:focus-within {
+		border-color: rgb(20 184 166);
+		box-shadow: 0 0 0 3px rgb(20 184 166 / 0.14);
+	}
+
+	:global(.dark) .project-card {
+		border-color: rgb(63 63 70);
+		background: rgb(24 24 27 / 0.72);
+		box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+	}
+
+	:global(.dark) .project-card::before {
+		background: radial-gradient(240px circle at var(--pointer-x) var(--pointer-y), rgb(45 212 191 / 0.9), transparent 72%);
+	}
+
+	:global(.dark) .project-card:focus-within {
+		border-color: rgb(45 212 191);
+		box-shadow: 0 0 0 3px rgb(45 212 191 / 0.16);
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.project-card:hover::before {
+			opacity: 1;
+		}
+
+		.project-card:hover {
+			border-color: rgb(20 184 166);
+			box-shadow: 0 14px 34px rgb(24 24 27 / 0.09);
+		}
+
+		:global(.dark) .project-card:hover {
+			border-color: rgb(45 212 191);
+			box-shadow: 0 14px 34px rgb(0 0 0 / 0.26);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.project-card,
+		.project-card::before {
+			transition: none;
+		}
+	}
+</style>
