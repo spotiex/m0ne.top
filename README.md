@@ -48,6 +48,7 @@ This site is customized from the [Devolio](https://devolio.devaradise.com) Astro
 - `/photos/[year]/` - photo archive filtered by year
 - `/photos/[year]/[month]/` - photo archive filtered by year and month
 - `/photos/management/` - authenticated photo management console
+- `/editor/` - authenticated, mobile-first Markdown editor for posts and fragments
 - `/projects/` - project list from `src/data/projects.ts`
 - `/tags/` - grouped tag index across posts, fragments, projects, and photos
 - `/tags/[tag]/` - all content for one tag
@@ -156,6 +157,21 @@ Photo gallery and admin console:
 | `PHOTO_ADMIN_USERNAME` | Yes, for management | Management console username |
 | `PHOTO_ADMIN_PASSWORD` | Yes, for management | Management console password |
 | `PHOTO_ADMIN_SESSION_SECRET` | Yes, for management | HMAC secret for signed admin cookies |
+
+Mobile writing editor:
+
+| Variable                        | Required            | Notes                                                                 |
+| :------------------------------ | :------------------ | :-------------------------------------------------------------------- |
+| `BLOG_ADMIN_USERNAME`           | Recommended         | Editor login username; falls back to `PHOTO_ADMIN_USERNAME`           |
+| `BLOG_ADMIN_PASSWORD`           | Recommended         | Editor login password; falls back to `PHOTO_ADMIN_PASSWORD`           |
+| `BLOG_ADMIN_SESSION_SECRET`     | Recommended         | HMAC secret; falls back to `PHOTO_ADMIN_SESSION_SECRET`               |
+| `BLOG_EDITOR_GITHUB_TOKEN`      | Yes, for publishing | Fine-grained token with Contents read/write access to this repository |
+| `BLOG_EDITOR_GITHUB_REPOSITORY` | No                  | `owner/repository`, defaults to `spotiex/m0ne.top`                    |
+| `BLOG_EDITOR_GITHUB_BRANCH`     | No                  | Publishing branch, defaults to `master`                               |
+
+The editor autosaves unfinished work only in the current browser. Publishing creates or updates
+`src/content/blog/<slug>/index.md` or `src/content/fragments/<slug>/index.md`. Updates include the
+GitHub file SHA so an edit based on stale content is rejected instead of silently overwriting it.
 
 ## Commands
 

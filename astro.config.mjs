@@ -21,7 +21,7 @@ export default defineConfig({
 	integrations: [
 		mdx(),
 		sitemap({
-			filter: (page) => !page.endsWith('/photos/management.html')
+			filter: (page) => !page.endsWith('/photos/management.html') && !page.endsWith('/editor/')
 		}),
 		tailwind(),
 		partytown()

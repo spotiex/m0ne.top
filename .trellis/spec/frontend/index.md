@@ -20,6 +20,18 @@ This directory contains guidelines for frontend development. Fill in each file w
 | [State Management](./state-management.md) | Local state, global state, server state | To fill |
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
 | [Type Safety](./type-safety.md) | Type patterns, validation | To fill |
+| [Mobile Editor Contract](./mobile-editor-contract.md) | Mobile editor API, GitHub, and content safety contract | Active |
+
+## Pre-Development Checklist
+
+When changing `/editor/`, editor APIs, Markdown/frontmatter serialization, or GitHub publishing:
+
+1. Read [Mobile Editor Contract](./mobile-editor-contract.md).
+2. Read the shared cross-layer and code-reuse thinking guides.
+
+## Quality Check
+
+For mobile editor changes, verify the contract validation matrix and run `npm test` and `npm run build`.
 
 ---
 

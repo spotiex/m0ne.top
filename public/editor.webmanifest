@@ -1,0 +1,22 @@
+{
+	"name": "m0ne 移动写作",
+	"short_name": "移动写作",
+	"description": "撰写并发布 m0ne.top 的文章与随笔",
+	"start_url": "/editor/",
+	"scope": "/editor/",
+	"display": "standalone",
+	"background_color": "#ffffff",
+	"theme_color": "#18181b",
+	"icons": [
+    {
+      "src": "/editor-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/editor-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+	]
+}

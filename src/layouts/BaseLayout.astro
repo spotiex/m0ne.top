@@ -17,6 +17,7 @@ const globalMusicTracks = Array.isArray(passedGlobalMusicTracks) ? passedGlobalM
 	<head>
 		<ThemeController />
 		<BaseHead title={title} description={description} image={image} />
+		<slot name='head' />
 		<ClientRouter />
 	</head>
 	<body

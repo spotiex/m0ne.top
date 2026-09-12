@@ -1,0 +1,679 @@
+---
+import '../../styles/global.css';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE_TITLE } from '../../consts';
+import { isAdminAuthenticated, isAdminConfigured } from '../../lib/server/adminAuth';
+import { isGitHubPublishingConfigured } from '../../lib/server/githubContent';
+
+export const prerender = false;
+
+const isConfigured = isAdminConfigured();
+const isAuthed = isAdminAuthenticated(Astro.cookies);
+const canPublish = isGitHubPublishingConfigured();
+---
+
+<BaseLayout title={`移动写作 - ${SITE_TITLE}`} description='从手机撰写并发布博客文章与随笔'>
+	<Fragment slot='head'>
+		<meta name='robots' content='noindex,nofollow' />
+		<meta name='theme-color' content='#18181b' />
+		<link rel='manifest' href='/editor.webmanifest' />
+		<link rel='apple-touch-icon' href='/editor-icon-192.png' />
+	</Fragment>
+
+	<div class='editor-shell mx-auto w-full max-w-5xl px-4 pb-24 sm:px-6'>
+		<header class='mb-5 flex items-start justify-between gap-4'>
+			<div>
+				<p class='mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400'>Private studio</p>
+				<h1 class='m-0 text-2xl font-semibold text-zinc-950 dark:text-zinc-50'>移动写作</h1>
+				<p class='mt-1 text-sm text-zinc-500 dark:text-zinc-400'>草稿留在设备上，确认发布后才会写入 Git。</p>
+			</div>
+			{
+				isAuthed && (
+					<button id='editor-logout' type='button' class='editor-button editor-button-secondary shrink-0'>
+						退出
+					</button>
+				)
+			}
+		</header>
+
+		{
+			!isConfigured ? (
+				<section class='editor-card border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100'>
+					<h2 class='mt-0 text-base font-semibold'>管理账号尚未配置</h2>
+					<p class='mb-0 text-sm leading-6'>
+						请配置 BLOG_ADMIN_USERNAME、BLOG_ADMIN_PASSWORD 和 BLOG_ADMIN_SESSION_SECRET；现有 PHOTO_ADMIN_* 配置也可以继续作为兼容回退。
+					</p>
+				</section>
+			) : !isAuthed ? (
+				<section class='editor-card mx-auto max-w-md'>
+					<form id='editor-login-form' class='space-y-4'>
+						<div>
+							<h2 class='m-0 text-lg font-semibold'>登录写作后台</h2>
+							<p class='mt-1 text-sm text-zinc-500 dark:text-zinc-400'>使用博客管理账号继续。</p>
+						</div>
+						<label class='editor-field'>
+							<span>用户名</span>
+							<input id='editor-login-username' type='text' autocomplete='username' required />
+						</label>
+						<label class='editor-field'>
+							<span>密码</span>
+							<input id='editor-login-password' type='password' autocomplete='current-password' required />
+						</label>
+						<p id='editor-login-status' class='min-h-5 text-sm text-zinc-500 dark:text-zinc-400' aria-live='polite' />
+						<button type='submit' class='editor-button editor-button-primary w-full'>
+							登录
+						</button>
+					</form>
+				</section>
+			) : (
+				<div id='editor-app' data-can-publish={canPublish ? 'true' : 'false'}>
+					{!canPublish && (
+						<div class='mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100'>
+							当前可以浏览和试写；配置 BLOG_EDITOR_GITHUB_TOKEN 后才能正式发布。
+						</div>
+					)}
+
+					<section class='editor-card mb-4'>
+						<div class='grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-end'>
+							<button id='editor-new' type='button' class='editor-button editor-button-primary'>
+								新建内容
+							</button>
+							<label class='editor-field min-w-0'>
+								<span>打开已发布内容</span>
+								<select id='editor-existing'>
+									<option value=''>正在读取内容列表…</option>
+								</select>
+							</label>
+							<button id='editor-refresh' type='button' class='editor-button editor-button-secondary'>
+								刷新
+							</button>
+						</div>
+					</section>
+
+					<form id='editor-form' class='space-y-4'>
+						<section class='editor-card'>
+							<div class='mb-4 flex items-center justify-between gap-3'>
+								<div class='inline-flex rounded-xl bg-zinc-100 p-1 dark:bg-zinc-900' role='group' aria-label='内容类型'>
+									<button type='button' class='editor-type-button is-active' data-editor-type='blog'>
+										长文
+									</button>
+									<button type='button' class='editor-type-button' data-editor-type='fragment'>
+										随笔
+									</button>
+								</div>
+								<span id='editor-save-state' class='text-xs text-zinc-500 dark:text-zinc-400' aria-live='polite'>
+									准备就绪
+								</span>
+							</div>
+
+							<div class='grid gap-4 sm:grid-cols-2'>
+								<label class='editor-field sm:col-span-2'>
+									<span>标题</span>
+									<input id='editor-title' name='title' type='text' maxlength='200' placeholder='给这段文字一个名字' required />
+								</label>
+								<label class='editor-field'>
+									<span>发布日期</span>
+									<input id='editor-pub-date' name='pubDate' type='date' required />
+								</label>
+								<label class='editor-field'>
+									<span>Slug</span>
+									<input id='editor-slug' name='slug' type='text' inputmode='url' pattern='[a-z0-9]+(?:-[a-z0-9]+)*' required />
+								</label>
+								<label class='editor-field sm:col-span-2'>
+									<span>摘要</span>
+									<textarea
+										id='editor-description'
+										name='description'
+										rows='2'
+										maxlength='500'
+										placeholder='列表和分享卡片上会看到这句话'
+									/>
+								</label>
+								<label class='editor-field sm:col-span-2'>
+									<span>
+										标签 <small>用逗号分隔</small>
+									</span>
+									<input id='editor-tags' name='tags' type='text' placeholder='博客, 生活' />
+								</label>
+							</div>
+
+							<details class='mt-4 rounded-xl border border-zinc-200 dark:border-zinc-800'>
+								<summary class='cursor-pointer px-4 py-3 text-sm font-medium'>更多信息</summary>
+								<div class='grid gap-4 border-t border-zinc-200 p-4 dark:border-zinc-800 sm:grid-cols-2'>
+									<label class='editor-field' data-blog-field>
+										<span>SEO 标题</span>
+										<input id='editor-seo-title' type='text' />
+									</label>
+									<label class='editor-field' data-blog-field>
+										<span>封面地址</span>
+										<input id='editor-cover-image' type='text' placeholder='https://… 或 ./cover.jpg' />
+									</label>
+									<label class='editor-field' data-blog-field>
+										<span>更新日期</span>
+										<input id='editor-updated-date' type='date' />
+									</label>
+									<label class='editor-field hidden' data-fragment-field>
+										<span>地点</span>
+										<input id='editor-location' type='text' placeholder='北京 海淀' />
+									</label>
+									<label class='editor-field hidden' data-fragment-field>
+										<span>天气</span>
+										<input id='editor-weather' type='text' placeholder='晴' />
+									</label>
+								</div>
+							</details>
+						</section>
+
+						<section class='editor-card overflow-hidden p-0'>
+							<div class='flex items-center justify-between border-b border-zinc-200 px-3 py-2 dark:border-zinc-800'>
+								<div class='inline-flex gap-1'>
+									<button type='button' class='editor-tab is-active' data-editor-tab='write'>
+										编辑
+									</button>
+									<button type='button' class='editor-tab' data-editor-tab='preview'>
+										预览
+									</button>
+								</div>
+								<div class='flex gap-1' aria-label='Markdown 快捷输入'>
+									<button type='button' class='editor-tool' data-editor-wrap='**' title='粗体'>
+										B
+									</button>
+									<button type='button' class='editor-tool italic' data-editor-wrap='*' title='斜体'>
+										I
+									</button>
+									<button type='button' class='editor-tool' data-editor-prefix='## ' title='二级标题'>
+										H2
+									</button>
+									<button type='button' class='editor-tool' data-editor-prefix='- ' title='列表'>
+										•
+									</button>
+								</div>
+							</div>
+							<div id='editor-write-panel'>
+								<label class='sr-only' for='editor-body'>
+									Markdown 正文
+								</label>
+								<textarea id='editor-body' name='body' class='editor-body' placeholder='从这里开始写…' required />
+							</div>
+							<div id='editor-preview-panel' class='hidden min-h-[50vh] p-5 sm:p-8'>
+								<article id='editor-preview' class='prose max-w-none dark:prose-invert' />
+							</div>
+						</section>
+
+						<div class='editor-publish-bar'>
+							<div class='min-w-0'>
+								<p id='editor-status' class='m-0 truncate text-sm text-zinc-600 dark:text-zinc-300' aria-live='polite'>
+									尚未发布
+								</p>
+							</div>
+							<button id='editor-publish' type='submit' class='editor-button editor-button-primary shrink-0' disabled={!canPublish}>
+								检查并发布
+							</button>
+						</div>
+					</form>
+
+					<dialog id='editor-publish-dialog' class='editor-dialog'>
+						<form method='dialog' class='space-y-4'>
+							<div>
+								<p class='mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500'>Publish</p>
+								<h2 class='m-0 text-xl font-semibold'>确认发布</h2>
+							</div>
+							<div id='editor-publish-summary' class='rounded-xl bg-zinc-100 p-4 text-sm leading-6 dark:bg-zinc-900' />
+							<p class='text-sm text-zinc-500 dark:text-zinc-400'>发布将向 GitHub 提交文件，并触发站点重新部署。</p>
+							<div class='flex justify-end gap-2'>
+								<button value='cancel' class='editor-button editor-button-secondary'>
+									返回修改
+								</button>
+								<button id='editor-confirm-publish' value='default' class='editor-button editor-button-primary'>
+									确认发布
+								</button>
+							</div>
+						</form>
+					</dialog>
+				</div>
+			)
+		}
+	</div>
+</BaseLayout>
+
+<style>
+	.editor-card {
+		@apply rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-5;
+	}
+	.editor-button {
+		@apply inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+	}
+	.editor-button-primary {
+		@apply bg-zinc-950 text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-300;
+	}
+	.editor-button-secondary {
+		@apply border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900;
+	}
+	.editor-field {
+		@apply block text-sm;
+	}
+	.editor-field > span {
+		@apply mb-1.5 block text-xs font-medium text-zinc-600 dark:text-zinc-400;
+	}
+	.editor-field small {
+		@apply font-normal text-zinc-400;
+	}
+	.editor-field :global(input),
+	.editor-field :global(textarea),
+	.editor-field :global(select) {
+		@apply w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-base text-zinc-950 outline-none transition focus:border-zinc-600 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-400 dark:focus:ring-zinc-800;
+	}
+	.editor-type-button,
+	.editor-tab {
+		@apply rounded-lg px-3 py-2 text-sm text-zinc-500 transition dark:text-zinc-400;
+	}
+	.editor-type-button.is-active,
+	.editor-tab.is-active {
+		@apply bg-white font-medium text-zinc-950 shadow-sm dark:bg-zinc-800 dark:text-zinc-50;
+	}
+	.editor-type-button:disabled {
+		@apply cursor-not-allowed opacity-50;
+	}
+	.editor-tool {
+		@apply flex h-9 min-w-9 items-center justify-center rounded-lg text-xs font-semibold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900;
+	}
+	.editor-body {
+		@apply block min-h-[52vh] w-full resize-y border-0 bg-transparent p-4 font-mono text-base leading-7 text-zinc-950 outline-none dark:text-zinc-50 sm:min-h-[60vh] sm:p-6;
+	}
+	.editor-publish-bar {
+		@apply fixed inset-x-3 bottom-3 z-40 mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white/95 p-3 shadow-xl backdrop-blur dark:border-zinc-700 dark:bg-zinc-950/95;
+		padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+	}
+	.editor-dialog {
+		@apply m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-zinc-200 bg-white p-5 text-zinc-950 shadow-2xl backdrop:bg-zinc-950/60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50;
+	}
+	.editor-dialog[open] {
+		animation: editor-dialog-in 140ms ease-out;
+	}
+	@keyframes editor-dialog-in {
+		from {
+			opacity: 0;
+			transform: translateY(8px) scale(0.98);
+		}
+	}
+</style>
+
+<script is:inline>
+	const setupEditorPage = () => {
+		const loginForm = document.querySelector('#editor-login-form');
+		if (loginForm instanceof HTMLFormElement && loginForm.dataset.ready !== 'true') {
+			loginForm.dataset.ready = 'true';
+			loginForm.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				const status = document.querySelector('#editor-login-status');
+				const button = loginForm.querySelector('button[type="submit"]');
+				const username = document.querySelector('#editor-login-username');
+				const password = document.querySelector('#editor-login-password');
+				if (!(username instanceof HTMLInputElement) || !(password instanceof HTMLInputElement)) return;
+				if (button instanceof HTMLButtonElement) button.disabled = true;
+				if (status instanceof HTMLElement) status.textContent = '正在登录…';
+				try {
+					const response = await fetch('/api/editor/login.json', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ username: username.value, password: password.value })
+					});
+					const result = await response.json();
+					if (!response.ok) throw new Error(result.error || '登录失败');
+					window.location.reload();
+				} catch (error) {
+					if (status instanceof HTMLElement) status.textContent = error instanceof Error ? error.message : '登录失败';
+					if (button instanceof HTMLButtonElement) button.disabled = false;
+				}
+			});
+		}
+
+		const app = document.querySelector('#editor-app');
+		if (!(app instanceof HTMLElement) || app.dataset.ready === 'true') return;
+		app.dataset.ready = 'true';
+
+		const byId = (id) => document.getElementById(id);
+		const form = byId('editor-form');
+		const bodyInput = byId('editor-body');
+		const typeButtons = [...document.querySelectorAll('[data-editor-type]')];
+		const existingSelect = byId('editor-existing');
+		const dialog = byId('editor-publish-dialog');
+		const confirmPublish = byId('editor-confirm-publish');
+		const publishButton = byId('editor-publish');
+		const storageKey = 'm0ne.editor.draft.v1';
+		let activeType = 'blog';
+		let activePath = '';
+		let activeSha = '';
+		let publishPayload = null;
+		let publishing = false;
+		let hasUnpublishedChanges = false;
+		let autosaveTimer = 0;
+
+		const getInput = (id) => {
+			const node = byId(id);
+			return node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement ? node : null;
+		};
+		const today = () => {
+			const date = new Date();
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const day = String(date.getDate()).padStart(2, '0');
+			return `${year}-${month}-${day}`;
+		};
+		const defaultSlug = (type = activeType) => `${today()}-${type === 'blog' ? 'post' : 'fragment'}`;
+		const setStatus = (message, tone = '') => {
+			const node = byId('editor-status');
+			if (!(node instanceof HTMLElement)) return;
+			node.textContent = message;
+			node.classList.toggle('text-red-600', tone === 'error');
+			node.classList.toggle('dark:text-red-400', tone === 'error');
+			if (!tone) node.classList.add('text-zinc-600', 'dark:text-zinc-300');
+		};
+		const setSaveState = (message) => {
+			const node = byId('editor-save-state');
+			if (node instanceof HTMLElement) node.textContent = message;
+		};
+
+		const collect = () => ({
+			type: activeType,
+			path: activePath,
+			sha: activeSha,
+			slug: getInput('editor-slug')?.value.trim() || '',
+			title: getInput('editor-title')?.value.trim() || '',
+			seoTitle: getInput('editor-seo-title')?.value.trim() || '',
+			description: getInput('editor-description')?.value.trim() || '',
+			pubDate: getInput('editor-pub-date')?.value || '',
+			updatedDate: getInput('editor-updated-date')?.value || '',
+			tags: (getInput('editor-tags')?.value || '')
+				.split(/[,，]/)
+				.map((tag) => tag.trim())
+				.filter(Boolean),
+			coverImage: getInput('editor-cover-image')?.value.trim() || '',
+			location: getInput('editor-location')?.value.trim() || '',
+			weather: getInput('editor-weather')?.value.trim() || '',
+			body: getInput('editor-body')?.value || ''
+		});
+
+		const applyType = (type) => {
+			activeType = type === 'fragment' ? 'fragment' : 'blog';
+			typeButtons.forEach((button) => button.classList.toggle('is-active', button.getAttribute('data-editor-type') === activeType));
+			document.querySelectorAll('[data-blog-field]').forEach((node) => node.classList.toggle('hidden', activeType !== 'blog'));
+			document.querySelectorAll('[data-fragment-field]').forEach((node) => node.classList.toggle('hidden', activeType !== 'fragment'));
+		};
+
+		const applyDocument = (document) => {
+			activePath = document.path || '';
+			activeSha = document.sha || '';
+			applyType(document.type);
+			typeButtons.forEach((button) => {
+				if (button instanceof HTMLButtonElement) button.disabled = Boolean(activePath);
+			});
+			const slugInput = getInput('editor-slug');
+			if (slugInput instanceof HTMLInputElement) slugInput.readOnly = Boolean(activePath && document.type === 'fragment');
+			const values = {
+				'editor-slug': document.slug,
+				'editor-title': document.title,
+				'editor-seo-title': document.seoTitle,
+				'editor-description': document.description,
+				'editor-pub-date': document.pubDate,
+				'editor-updated-date': document.updatedDate,
+				'editor-tags': (document.tags || []).join(', '),
+				'editor-cover-image': document.coverImage,
+				'editor-location': document.location,
+				'editor-weather': document.weather,
+				'editor-body': document.body
+			};
+			Object.entries(values).forEach(([id, value]) => {
+				const input = getInput(id);
+				if (input) input.value = value || '';
+			});
+		};
+
+		const newDocument = (type = activeType) => {
+			applyDocument({
+				type,
+				path: '',
+				sha: '',
+				slug: defaultSlug(type),
+				title: '',
+				seoTitle: '',
+				description: '',
+				pubDate: today(),
+				updatedDate: '',
+				tags: type === 'blog' ? ['博客'] : [],
+				coverImage: '',
+				location: '',
+				weather: '',
+				body: ''
+			});
+			if (existingSelect instanceof HTMLSelectElement) existingSelect.value = '';
+			setStatus('已新建本地草稿');
+			hasUnpublishedChanges = false;
+			getInput('editor-title')?.focus();
+			saveDraft();
+		};
+
+		const saveDraft = () => {
+			try {
+				localStorage.setItem(storageKey, JSON.stringify({ version: 1, savedAt: new Date().toISOString(), document: collect() }));
+				setSaveState(`已保存 ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+			} catch {
+				setSaveState('本地保存失败');
+			}
+		};
+		const scheduleDraft = () => {
+			setSaveState('正在保存…');
+			window.clearTimeout(autosaveTimer);
+			autosaveTimer = window.setTimeout(saveDraft, 350);
+		};
+
+		const restoreDraft = () => {
+			try {
+				const draft = JSON.parse(localStorage.getItem(storageKey) || 'null');
+				if (draft?.version === 1 && draft.document) {
+					applyDocument(draft.document);
+					setStatus('已恢复这台设备上的草稿');
+					setSaveState('草稿已恢复');
+					hasUnpublishedChanges = true;
+					return;
+				}
+			} catch {
+				localStorage.removeItem(storageKey);
+			}
+			newDocument('blog');
+		};
+
+		const loadList = async () => {
+			if (!(existingSelect instanceof HTMLSelectElement)) return;
+			existingSelect.disabled = true;
+			existingSelect.innerHTML = '<option value="">正在读取内容列表…</option>';
+			try {
+				const response = await fetch('/api/editor/content/index.json');
+				const result = await response.json();
+				if (!response.ok) throw new Error(result.error || '读取失败');
+				existingSelect.innerHTML = '<option value="">选择一篇内容…</option>';
+				for (const item of result.items || []) {
+					const option = document.createElement('option');
+					option.value = item.path;
+					option.textContent = `${item.type === 'blog' ? '长文' : '随笔'} · ${item.pubDate || '无日期'} · ${item.title || item.slug}`;
+					existingSelect.append(option);
+				}
+				if (activePath) existingSelect.value = activePath;
+			} catch (error) {
+				existingSelect.innerHTML = '<option value="">内容列表读取失败</option>';
+				setStatus(error instanceof Error ? error.message : '内容列表读取失败', 'error');
+			} finally {
+				existingSelect.disabled = false;
+			}
+		};
+
+		const loadDocument = async (path) => {
+			if (!path) return;
+			if (hasUnpublishedChanges && !window.confirm('当前编辑内容已经保存在本机草稿中。仍要打开另一篇内容并替换编辑区吗？')) {
+				if (existingSelect instanceof HTMLSelectElement) existingSelect.value = activePath;
+				return;
+			}
+			setStatus('正在打开内容…');
+			try {
+				const response = await fetch(`/api/editor/content/item.json?path=${encodeURIComponent(path)}`);
+				const result = await response.json();
+				if (!response.ok) throw new Error(result.error || '读取失败');
+				applyDocument(result.document);
+				saveDraft();
+				hasUnpublishedChanges = false;
+				setStatus(`已打开「${result.document.title || result.document.slug}」`);
+			} catch (error) {
+				setStatus(error instanceof Error ? error.message : '内容读取失败', 'error');
+			}
+		};
+
+		const inlineMarkdown = (text) => {
+			const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			return escaped
+				.replace(/`([^`]+)`/g, '<code>$1</code>')
+				.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+				.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+		};
+		const renderPreview = () => {
+			const title = inlineMarkdown(getInput('editor-title')?.value || '无标题');
+			const lines = (getInput('editor-body')?.value || '').split('\n');
+			let html = `<h1>${title}</h1>`;
+			let inList = false;
+			for (const raw of lines) {
+				const line = raw.trim();
+				if (line.startsWith('- ')) {
+					if (!inList) {
+						html += '<ul>';
+						inList = true;
+					}
+					html += `<li>${inlineMarkdown(line.slice(2))}</li>`;
+					continue;
+				}
+				if (inList) {
+					html += '</ul>';
+					inList = false;
+				}
+				if (!line) continue;
+				if (line.startsWith('### ')) html += `<h3>${inlineMarkdown(line.slice(4))}</h3>`;
+				else if (line.startsWith('## ')) html += `<h2>${inlineMarkdown(line.slice(3))}</h2>`;
+				else if (line.startsWith('# ')) html += `<h1>${inlineMarkdown(line.slice(2))}</h1>`;
+				else if (line.startsWith('> ')) html += `<blockquote><p>${inlineMarkdown(line.slice(2))}</p></blockquote>`;
+				else html += `<p>${inlineMarkdown(line)}</p>`;
+			}
+			if (inList) html += '</ul>';
+			const preview = byId('editor-preview');
+			if (preview instanceof HTMLElement) preview.innerHTML = html;
+		};
+
+		const publish = async () => {
+			if (publishing || !publishPayload) return;
+			publishing = true;
+			if (confirmPublish instanceof HTMLButtonElement) confirmPublish.disabled = true;
+			if (publishButton instanceof HTMLButtonElement) publishButton.disabled = true;
+			setStatus('正在提交到 GitHub…');
+			try {
+				const response = await fetch('/api/editor/content/publish.json', {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify(publishPayload)
+				});
+				const result = await response.json();
+				if (!response.ok) throw new Error(result.error || '发布失败');
+				activePath = result.path;
+				activeSha = result.sha;
+				hasUnpublishedChanges = false;
+				localStorage.removeItem(storageKey);
+				setSaveState('已发布');
+				setStatus(`发布成功，部署完成后访问 ${result.publicPath}`);
+				if (dialog instanceof HTMLDialogElement) dialog.close();
+				await loadList();
+			} catch (error) {
+				setStatus(error instanceof Error ? error.message : '发布失败', 'error');
+			} finally {
+				publishing = false;
+				if (confirmPublish instanceof HTMLButtonElement) confirmPublish.disabled = false;
+				if (publishButton instanceof HTMLButtonElement) publishButton.disabled = app.dataset.canPublish !== 'true';
+			}
+		};
+
+		form?.addEventListener('input', () => {
+			hasUnpublishedChanges = true;
+			scheduleDraft();
+		});
+		form?.addEventListener('submit', (event) => {
+			event.preventDefault();
+			if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+			publishPayload = collect();
+			const summary = byId('editor-publish-summary');
+			if (summary instanceof HTMLElement) {
+				const target = publishPayload.path || `src/content/${activeType === 'blog' ? 'blog' : 'fragments'}/${publishPayload.slug}/index.md`;
+				summary.textContent = `${publishPayload.sha ? '更新' : '新建'} · ${activeType === 'blog' ? '长文' : '随笔'} · ${publishPayload.title} · ${target}`;
+			}
+			if (dialog instanceof HTMLDialogElement) dialog.showModal();
+		});
+		confirmPublish?.addEventListener('click', (event) => {
+			event.preventDefault();
+			publish();
+		});
+		byId('editor-new')?.addEventListener('click', () => {
+			if (!hasUnpublishedChanges || window.confirm('当前编辑内容已经保存在本机草稿中。仍要新建并替换编辑区吗？')) newDocument(activeType);
+		});
+		byId('editor-refresh')?.addEventListener('click', loadList);
+		existingSelect?.addEventListener('change', () => loadDocument(existingSelect.value));
+		typeButtons.forEach((button) =>
+			button.addEventListener('click', () => {
+				const oldDefault = defaultSlug(activeType);
+				const nextType = button.getAttribute('data-editor-type') === 'fragment' ? 'fragment' : 'blog';
+				applyType(nextType);
+				const slug = getInput('editor-slug');
+				if (!activePath && slug && (!slug.value || slug.value === oldDefault)) slug.value = defaultSlug(nextType);
+				scheduleDraft();
+			})
+		);
+
+		document.querySelectorAll('[data-editor-tab]').forEach((button) =>
+			button.addEventListener('click', () => {
+				const previewing = button.getAttribute('data-editor-tab') === 'preview';
+				document.querySelectorAll('[data-editor-tab]').forEach((node) => node.classList.toggle('is-active', node === button));
+				byId('editor-write-panel')?.classList.toggle('hidden', previewing);
+				byId('editor-preview-panel')?.classList.toggle('hidden', !previewing);
+				if (previewing) renderPreview();
+			})
+		);
+
+		document.querySelectorAll('[data-editor-wrap]').forEach((button) =>
+			button.addEventListener('click', () => {
+				if (!(bodyInput instanceof HTMLTextAreaElement)) return;
+				const marker = button.getAttribute('data-editor-wrap') || '';
+				const start = bodyInput.selectionStart;
+				const end = bodyInput.selectionEnd;
+				bodyInput.setRangeText(`${marker}${bodyInput.value.slice(start, end)}${marker}`, start, end, 'select');
+				bodyInput.focus();
+				scheduleDraft();
+			})
+		);
+		document.querySelectorAll('[data-editor-prefix]').forEach((button) =>
+			button.addEventListener('click', () => {
+				if (!(bodyInput instanceof HTMLTextAreaElement)) return;
+				const prefix = button.getAttribute('data-editor-prefix') || '';
+				const lineStart = bodyInput.value.lastIndexOf('\n', bodyInput.selectionStart - 1) + 1;
+				bodyInput.setRangeText(prefix, lineStart, lineStart, 'end');
+				bodyInput.focus();
+				scheduleDraft();
+			})
+		);
+
+		byId('editor-logout')?.addEventListener('click', async () => {
+			await fetch('/api/editor/logout.json', { method: 'POST' });
+			window.location.reload();
+		});
+		if ('serviceWorker' in navigator) navigator.serviceWorker.register('/editor-sw.js', { scope: '/editor/' }).catch(() => {});
+		window.addEventListener('pagehide', saveDraft);
+		restoreDraft();
+		loadList();
+	};
+
+	if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupEditorPage, { once: true });
+	else setupEditorPage();
+	document.addEventListener('astro:page-load', setupEditorPage);
+</script>
