@@ -145,6 +145,15 @@ export const getR2ObjectText = async (key: string) => {
 };
 
 const getExtension = (file: Pick<File, 'name' | 'type'>) => {
+	const byContentType: Record<string, string> = {
+		'image/jpeg': 'jpg',
+		'image/png': 'png',
+		'image/webp': 'webp',
+		'image/gif': 'gif'
+	};
+	const trustedExtension = byContentType[file.type.toLowerCase()];
+	if (trustedExtension) return trustedExtension;
+
 	const fromName = path.extname(file.name).replace('.', '').toLowerCase();
 	if (fromName) return fromName === 'jpeg' ? 'jpg' : fromName;
 
@@ -193,14 +202,17 @@ const buildObjectUploadUrl = (key: string) => {
 	return new URL(`${endpointUrl.origin}${encodePathPart(objectPath)}`);
 };
 
-export const buildImageObjectKey = (file: Pick<File, 'name' | 'type'>, now = new Date()) => {
+const buildDatedImageObjectKey = (file: Pick<File, 'name' | 'type'>, now: Date, prefix: string) => {
 	const { year, month, day } = getCurrentPhotoDateParts(getPhotoTimeZone(), now);
-	const prefix = getImageObjectPrefix().replace(/^\/+|\/+$/g, '');
+	const normalizedPrefix = prefix.replace(/^\/+|\/+$/g, '');
 	const extension = getExtension(file);
 	const key = `${year}/${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}/${createUlidDayslice(now)}.${extension}`;
 
-	return prefix ? `${prefix}/${key}` : key;
+	return normalizedPrefix ? `${normalizedPrefix}/${key}` : key;
 };
+
+export const buildImageObjectKey = (file: Pick<File, 'name' | 'type'>, now = new Date()) =>
+	buildDatedImageObjectKey(file, now, getImageObjectPrefix());
 
 export const getImageUploadTarget = (file: Pick<File, 'name' | 'type'>, now = new Date()) => {
 	const key = buildImageObjectKey(file, now);
@@ -211,9 +223,13 @@ export const getImageUploadTarget = (file: Pick<File, 'name' | 'type'>, now = ne
 	};
 };
 
-export const createBrowserUploadTarget = (file: Pick<File, 'name' | 'type'>, now = new Date()): BrowserUploadTarget => {
+export const createBrowserUploadTarget = (
+	file: Pick<File, 'name' | 'type'>,
+	now = new Date(),
+	prefix = getImageObjectPrefix()
+): BrowserUploadTarget => {
 	const config = getR2Config();
-	const key = buildImageObjectKey(file, now);
+	const key = buildDatedImageObjectKey(file, now, prefix);
 	const uploadUrl = buildObjectUploadUrl(key);
 	const contentType = file.type || 'application/octet-stream';
 	const payloadHash = 'UNSIGNED-PAYLOAD';

@@ -168,10 +168,22 @@ Mobile writing editor:
 | `BLOG_EDITOR_GITHUB_TOKEN`      | Yes, for publishing | Fine-grained token with Contents read/write access to this repository |
 | `BLOG_EDITOR_GITHUB_REPOSITORY` | No                  | `owner/repository`, defaults to `spotiex/m0ne.top`                    |
 | `BLOG_EDITOR_GITHUB_BRANCH`     | No                  | Publishing branch, defaults to `master`                               |
+| `BLOG_EDITOR_IMAGE_PREFIX`      | No                  | R2 prefix for article assets, defaults to `articles`                  |
 
 The editor autosaves unfinished work only in the current browser. Publishing creates or updates
 `src/content/blog/<slug>/index.md` or `src/content/fragments/<slug>/index.md`. Updates include the
 GitHub file SHA so an edit based on stale content is rejected instead of silently overwriting it.
+
+The editor can upload single images and small galleries directly to R2, then inserts `::image` or
+`:::gallery` Markdown directives. Smart processing is enabled by default: eligible photos are resized
+to a 2560 px maximum edge and re-encoded without EXIF metadata, while GIF animation and PNG
+transparency are preserved. The same directive plugin renders editor previews and public pages.
+
+R2 direct browser uploads require the audited CORS policy in `r2-cors.json`:
+
+```bash
+npx wrangler r2 bucket cors set blog --file r2-cors.json
+```
 
 ## Commands
 

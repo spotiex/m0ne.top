@@ -2,7 +2,9 @@ import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwind from '@astrojs/tailwind';
+import remarkDirective from 'remark-directive';
 import { autoNewTabExternalLinks } from './src/autoNewTabExternalLinks';
+import { imageDirectivePlugin } from './src/lib/markdownImageDirectives';
 
 import partytown from '@astrojs/partytown';
 
@@ -28,6 +30,7 @@ export default defineConfig({
 	],
 	markdown: {
 		extendDefaultPlugins: true,
+		remarkPlugins: [remarkDirective, imageDirectivePlugin],
 		rehypePlugins: [
 			[
 				autoNewTabExternalLinks,

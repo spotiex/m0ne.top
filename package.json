@@ -6,7 +6,7 @@
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
-    "test": "node --test tests/editorContent.test.ts",
+    "test": "node --test tests/*.test.ts",
     "astro": "ASTRO_TELEMETRY_DISABLED=1 astro",
     "ntl": "netlify"
   },
@@ -22,6 +22,7 @@
     "@astrojs/tailwind": "^6.0.2",
     "astro": "^5.18.1",
     "NeteaseCloudMusicApi": "^4.32.0",
+    "remark-directive": "^4.0.0",
     "sharp": "^0.33.5",
     "tailwindcss": "^3.4.19",
     "twikoo": "^1.7.9",

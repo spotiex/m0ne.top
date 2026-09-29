@@ -187,6 +187,16 @@ const canPublish = isGitHubPublishingConfigured();
 									<button type='button' class='editor-tool' data-editor-prefix='- ' title='列表'>
 										•
 									</button>
+									<button
+									id='editor-media-open'
+									type='button'
+									class='editor-tool gap-1 px-2'
+										title='插入或编辑图片'
+										aria-label='插入或编辑图片'
+										disabled
+									>
+									<span aria-hidden='true'>▧</span><span>图片</span>
+									</button>
 								</div>
 							</div>
 							<div id='editor-write-panel'>
@@ -196,7 +206,15 @@ const canPublish = isGitHubPublishingConfigured();
 								<textarea id='editor-body' name='body' class='editor-body' placeholder='从这里开始写…' required />
 							</div>
 							<div id='editor-preview-panel' class='hidden min-h-[50vh] p-5 sm:p-8'>
-								<article id='editor-preview' class='prose max-w-none dark:prose-invert' />
+								<h1 id='editor-preview-title' class='mb-5 text-3xl font-semibold text-zinc-950 dark:text-zinc-50'>
+									无标题
+								</h1>
+								<iframe
+									id='editor-preview'
+									title='Markdown 预览'
+									sandbox=''
+									class='min-h-[55vh] w-full rounded-xl border-0 bg-white dark:bg-zinc-950'
+								/>
 							</div>
 						</section>
 
@@ -229,6 +247,99 @@ const canPublish = isGitHubPublishingConfigured();
 								</button>
 							</div>
 						</form>
+					</dialog>
+
+					<dialog id='editor-media-dialog' class='editor-media-dialog'>
+						<div class='editor-media-panel'>
+							<header class='flex items-start justify-between gap-4 border-b border-zinc-200 p-4 dark:border-zinc-800 sm:p-5'>
+								<div>
+									<p class='mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500'>Media block</p>
+									<h2 id='editor-media-title' class='m-0 text-xl font-semibold'>
+										插入图片
+									</h2>
+								</div>
+								<button id='editor-media-close' type='button' class='editor-button editor-button-secondary px-3' aria-label='关闭图片面板'>
+									×
+								</button>
+							</header>
+
+							<div class='editor-media-content'>
+								<section>
+									<div id='editor-media-dropzone' class='editor-media-dropzone' tabindex='0' role='button'>
+										<input id='editor-media-files' type='file' accept='image/*' multiple class='sr-only' />
+										<strong>选择、拍摄或拖入图片</strong>
+										<span>JPEG、PNG、WebP、GIF；单张不超过 30 MB</span>
+									</div>
+									<div class='mt-3 flex gap-2'>
+										<input id='editor-media-url' type='url' class='editor-media-input min-w-0 grow' placeholder='也可以粘贴已有图片 URL' />
+										<button id='editor-media-add-url' type='button' class='editor-button editor-button-secondary shrink-0'>
+											添加 URL
+										</button>
+									</div>
+								</section>
+
+								<div id='editor-media-list' class='space-y-3' />
+
+								<section class='grid gap-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800 sm:grid-cols-2 lg:grid-cols-4'>
+									<label class='editor-field'>
+										<span>列数</span>
+										<select id='editor-media-columns'>
+											<option value='auto'>自动</option>
+											<option value='1'>1 列</option>
+											<option value='2'>2 列</option>
+											<option value='3'>3 列</option>
+										</select>
+									</label>
+									<label class='editor-field'>
+										<span>比例</span>
+										<select id='editor-media-ratio'>
+											<option value='original'>原始</option>
+											<option value='landscape'>横向 4:3</option>
+											<option value='portrait'>纵向 3:4</option>
+											<option value='square'>方形 1:1</option>
+										</select>
+									</label>
+									<label class='editor-field'>
+										<span>适应方式</span>
+										<select id='editor-media-fit'>
+											<option value='cover'>裁切填满</option>
+											<option value='contain'>完整显示</option>
+										</select>
+									</label>
+									<label class='editor-field'>
+										<span>宽度</span>
+										<select id='editor-media-width'>
+											<option value='compact'>紧凑</option>
+											<option value='normal'>正文</option>
+											<option value='wide'>宽幅</option>
+										</select>
+									</label>
+									<label class='editor-field sm:col-span-2 lg:col-span-4'>
+										<span>整组图注</span>
+										<input id='editor-media-caption' type='text' placeholder='可选' />
+									</label>
+									<label class='flex items-start gap-3 text-sm sm:col-span-2 lg:col-span-4'>
+										<input id='editor-media-original' type='checkbox' class='mt-1 size-4' />
+										<span>
+											<strong class='block'>上传原图</strong>
+											<small class='text-zinc-500 dark:text-zinc-400'>
+												默认会压缩到最长边 2560px 并清除元数据；原图可能更大且保留 EXIF。
+											</small>
+										</span>
+									</label>
+								</section>
+								<p id='editor-media-status' class='min-h-5 text-sm text-zinc-500 dark:text-zinc-400' aria-live='polite' />
+							</div>
+
+							<footer class='flex justify-end gap-2 border-t border-zinc-200 p-4 dark:border-zinc-800 sm:p-5'>
+								<button id='editor-media-cancel' type='button' class='editor-button editor-button-secondary'>
+									取消
+								</button>
+								<button id='editor-media-insert' type='button' class='editor-button editor-button-primary'>
+									上传并插入
+								</button>
+							</footer>
+						</div>
 					</dialog>
 				</div>
 			)
@@ -290,6 +401,38 @@ const canPublish = isGitHubPublishingConfigured();
 	.editor-dialog[open] {
 		animation: editor-dialog-in 140ms ease-out;
 	}
+	.editor-media-dialog {
+		@apply m-auto h-[min(92dvh,900px)] w-[calc(100%-1rem)] max-w-5xl overflow-hidden rounded-2xl border border-zinc-200 bg-white p-0 text-zinc-950 shadow-2xl backdrop:bg-zinc-950/60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50;
+	}
+	.editor-media-panel {
+		@apply flex h-full flex-col;
+	}
+	.editor-media-content {
+		@apply min-h-0 grow space-y-4 overflow-y-auto p-4 sm:p-5;
+	}
+	.editor-media-dropzone {
+		@apply flex min-h-28 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 px-4 text-center outline-none transition hover:border-zinc-500 focus:border-zinc-600 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-900/60 dark:hover:border-zinc-500 dark:focus:ring-zinc-800;
+	}
+	.editor-media-dropzone span {
+		@apply text-xs text-zinc-500 dark:text-zinc-400;
+	}
+	.editor-media-input {
+		@apply rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-base outline-none focus:border-zinc-600 focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:ring-zinc-800;
+	}
+	:global(.editor-media-card-field) {
+		@apply block text-sm;
+	}
+	:global(.editor-media-card-field > span) {
+		@apply mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400;
+	}
+	:global(.editor-media-card-field > input) {
+		@apply w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-600 dark:border-zinc-700 dark:bg-zinc-950;
+	}
+	@media (max-width: 639px) {
+		.editor-media-dialog {
+			@apply mb-0 h-[94dvh] w-full max-w-none rounded-b-none rounded-t-2xl;
+		}
+	}
 	@keyframes editor-dialog-in {
 		from {
 			opacity: 0;
@@ -298,7 +441,25 @@ const canPublish = isGitHubPublishingConfigured();
 	}
 </style>
 
+<script>
+	import { processEditorImage } from '../../lib/client/editorImageProcessing';
+	import { findEditorMediaBlock, serializeEditorMediaBlock } from '../../lib/editorMedia';
+
+	window.dispatchEvent(
+		new CustomEvent('m0ne-editor-media-ready', {
+			detail: { findEditorMediaBlock, serializeEditorMediaBlock, processEditorImage }
+		})
+	);
+</script>
+
 <script is:inline>
+	let mediaTools = null;
+	window.addEventListener('m0ne-editor-media-ready', (event) => {
+		mediaTools = event.detail;
+		const openButton = document.getElementById('editor-media-open');
+		if (openButton instanceof HTMLButtonElement) openButton.disabled = false;
+	});
+
 	const setupEditorPage = () => {
 		const loginForm = document.querySelector('#editor-login-form');
 		if (loginForm instanceof HTMLFormElement && loginForm.dataset.ready !== 'true') {
@@ -340,6 +501,10 @@ const canPublish = isGitHubPublishingConfigured();
 		const dialog = byId('editor-publish-dialog');
 		const confirmPublish = byId('editor-confirm-publish');
 		const publishButton = byId('editor-publish');
+		const mediaDialog = byId('editor-media-dialog');
+		const mediaList = byId('editor-media-list');
+		const mediaFileInput = byId('editor-media-files');
+		const mediaInsertButton = byId('editor-media-insert');
 		const storageKey = 'm0ne.editor.draft.v1';
 		let activeType = 'blog';
 		let activePath = '';
@@ -348,6 +513,11 @@ const canPublish = isGitHubPublishingConfigured();
 		let publishing = false;
 		let hasUnpublishedChanges = false;
 		let autosaveTimer = 0;
+		let previewRequestId = 0;
+		let mediaItems = [];
+		let mediaReplaceRange = null;
+		let mediaBusy = false;
+		let previewStylesPromise = null;
 
 		const getInput = (id) => {
 			const node = byId(id);
@@ -521,48 +691,358 @@ const canPublish = isGitHubPublishingConfigured();
 				applyDocument(result.document);
 				saveDraft();
 				hasUnpublishedChanges = false;
-				setStatus(`已打开「${result.document.title || result.document.slug}」`);
+				setStatus(
+					result.warning
+						? `已打开本地「${result.document.title || result.document.slug}」；GitHub 匿名额度已耗尽，当前不能更新发布`
+						: `已打开「${result.document.title || result.document.slug}」`
+				);
 			} catch (error) {
 				setStatus(error instanceof Error ? error.message : '内容读取失败', 'error');
 			}
 		};
 
-		const inlineMarkdown = (text) => {
-			const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-			return escaped
-				.replace(/`([^`]+)`/g, '<code>$1</code>')
-				.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-				.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-		};
-		const renderPreview = () => {
-			const title = inlineMarkdown(getInput('editor-title')?.value || '无标题');
-			const lines = (getInput('editor-body')?.value || '').split('\n');
-			let html = `<h1>${title}</h1>`;
-			let inList = false;
-			for (const raw of lines) {
-				const line = raw.trim();
-				if (line.startsWith('- ')) {
-					if (!inList) {
-						html += '<ul>';
-						inList = true;
-					}
-					html += `<li>${inlineMarkdown(line.slice(2))}</li>`;
-					continue;
-				}
-				if (inList) {
-					html += '</ul>';
-					inList = false;
-				}
-				if (!line) continue;
-				if (line.startsWith('### ')) html += `<h3>${inlineMarkdown(line.slice(4))}</h3>`;
-				else if (line.startsWith('## ')) html += `<h2>${inlineMarkdown(line.slice(3))}</h2>`;
-				else if (line.startsWith('# ')) html += `<h1>${inlineMarkdown(line.slice(2))}</h1>`;
-				else if (line.startsWith('> ')) html += `<blockquote><p>${inlineMarkdown(line.slice(2))}</p></blockquote>`;
-				else html += `<p>${inlineMarkdown(line)}</p>`;
-			}
-			if (inList) html += '</ul>';
+		const renderPreview = async () => {
+			const requestId = ++previewRequestId;
 			const preview = byId('editor-preview');
-			if (preview instanceof HTMLElement) preview.innerHTML = html;
+			const previewTitle = byId('editor-preview-title');
+			if (previewTitle instanceof HTMLElement) previewTitle.textContent = getInput('editor-title')?.value || '无标题';
+			if (!(preview instanceof HTMLIFrameElement)) return;
+			preview.srcdoc = '<p style="font:14px system-ui;color:#71717a">正在使用 Astro 渲染预览…</p>';
+
+			try {
+				previewStylesPromise ??= fetch('/editor-preview.css').then(async (response) => {
+					if (!response.ok) throw new Error('预览样式加载失败');
+					return response.text();
+				});
+				const [response, previewStyles] = await Promise.all([
+					fetch('/api/editor/preview.json', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ body: getInput('editor-body')?.value || '' })
+					}),
+					previewStylesPromise
+				]);
+				const result = await response.json();
+				if (!response.ok) throw new Error(result.error || '预览渲染失败');
+				if (requestId !== previewRequestId) return;
+				const safeStyles = previewStyles.replace(/<\/style/gi, '<\\/style');
+				preview.srcdoc = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${safeStyles}</style></head><body><main>${result.html}</main></body></html>`;
+			} catch (error) {
+				if (requestId !== previewRequestId) return;
+				const message = error instanceof Error ? error.message : '预览渲染失败';
+				preview.srcdoc = `<p style="font:14px system-ui;color:#dc2626">${message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+			}
+		};
+
+		const formatBytes = (bytes) => {
+			if (!Number.isFinite(bytes) || bytes <= 0) return '—';
+			if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+			return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+		};
+		const setMediaStatus = (message, isError = false) => {
+			const node = byId('editor-media-status');
+			if (!(node instanceof HTMLElement)) return;
+			node.textContent = message;
+			node.classList.toggle('text-red-600', isError);
+			node.classList.toggle('dark:text-red-400', isError);
+		};
+		const releaseMediaPreviews = () => {
+			for (const item of mediaItems) {
+				if (item.localPreview) URL.revokeObjectURL(item.localPreview);
+			}
+		};
+		const getMediaSelectValue = (id, fallback) => {
+			const node = byId(id);
+			return node instanceof HTMLSelectElement ? node.value : fallback;
+		};
+		const setMediaValue = (id, value) => {
+			const node = byId(id);
+			if (node instanceof HTMLInputElement || node instanceof HTMLSelectElement) node.value = value;
+		};
+
+		const renderMediaItems = () => {
+			if (!(mediaList instanceof HTMLElement)) return;
+			mediaList.replaceChildren();
+			mediaItems.forEach((item, index) => {
+				const card = document.createElement('article');
+				card.className = 'grid gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800 sm:grid-cols-[120px_minmax(0,1fr)_auto]';
+				card.innerHTML = `
+					<img class="h-28 w-full rounded-lg bg-zinc-100 object-cover sm:h-24" alt="">
+					<div class="grid min-w-0 gap-2 sm:grid-cols-2">
+						<label class="editor-media-card-field sm:col-span-2"><span>Alt 文本</span><input data-media-alt type="text" placeholder="描述图片内容"></label>
+						<label class="editor-media-card-field sm:col-span-2"><span>图片图注</span><input data-media-caption type="text" placeholder="可选"></label>
+						<label class="flex items-center gap-2 text-xs text-zinc-500"><input data-media-decorative type="checkbox"> 装饰图（Alt 留空）</label>
+						<p data-media-size class="m-0 text-xs text-zinc-500 sm:text-right"></p>
+					</div>
+					<div class="flex gap-1 sm:flex-col">
+						<button data-media-up type="button" class="flex h-9 min-w-9 items-center justify-center rounded-lg text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900" aria-label="向前移动">↑</button>
+						<button data-media-down type="button" class="flex h-9 min-w-9 items-center justify-center rounded-lg text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900" aria-label="向后移动">↓</button>
+						<button data-media-remove type="button" class="flex h-9 min-w-9 items-center justify-center rounded-lg text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30" aria-label="移除">×</button>
+					</div>`;
+				const image = card.querySelector('img');
+				if (image instanceof HTMLImageElement) image.src = item.localPreview || item.src;
+				const alt = card.querySelector('[data-media-alt]');
+				const caption = card.querySelector('[data-media-caption]');
+				const decorative = card.querySelector('[data-media-decorative]');
+				const size = card.querySelector('[data-media-size]');
+				if (alt instanceof HTMLInputElement) {
+					alt.value = item.alt;
+					alt.disabled = item.decorative;
+					alt.addEventListener('input', () => {
+						item.alt = alt.value;
+					});
+				}
+				if (caption instanceof HTMLInputElement) {
+					caption.value = item.caption;
+					caption.addEventListener('input', () => {
+						item.caption = caption.value;
+					});
+				}
+				if (decorative instanceof HTMLInputElement) {
+					decorative.checked = item.decorative;
+					decorative.addEventListener('change', () => {
+						item.decorative = decorative.checked;
+						if (item.decorative) item.alt = '';
+						renderMediaItems();
+					});
+				}
+				if (size instanceof HTMLElement) {
+					size.textContent = item.sourceFile
+						? `${formatBytes(item.originalSize)} → ${formatBytes(item.uploadSize)} · ${item.note}`
+						: '已上传资源';
+				}
+				card.querySelector('[data-media-up]')?.addEventListener('click', () => {
+					if (index <= 0) return;
+					[mediaItems[index - 1], mediaItems[index]] = [mediaItems[index], mediaItems[index - 1]];
+					renderMediaItems();
+				});
+				card.querySelector('[data-media-down]')?.addEventListener('click', () => {
+					if (index >= mediaItems.length - 1) return;
+					[mediaItems[index + 1], mediaItems[index]] = [mediaItems[index], mediaItems[index + 1]];
+					renderMediaItems();
+				});
+				card.querySelector('[data-media-remove]')?.addEventListener('click', () => {
+					if (item.localPreview) URL.revokeObjectURL(item.localPreview);
+					mediaItems.splice(index, 1);
+					renderMediaItems();
+				});
+				mediaList.append(card);
+			});
+		};
+
+		const addMediaFiles = async (files) => {
+			const tools = mediaTools;
+			if (!tools || mediaBusy) return;
+			if (mediaItems.length + files.length > 12) {
+				setMediaStatus('一个图片块最多支持 12 张图片。', true);
+				return;
+			}
+			mediaBusy = true;
+			const originalToggle = byId('editor-media-original');
+			const useOriginal = originalToggle instanceof HTMLInputElement && originalToggle.checked;
+			if (originalToggle instanceof HTMLInputElement) originalToggle.disabled = true;
+			try {
+				for (const sourceFile of files) {
+					setMediaStatus(`正在处理 ${sourceFile.name}…`);
+					const result = await tools.processEditorImage(sourceFile, useOriginal);
+					mediaItems.push({
+						src: '',
+						alt: '',
+						caption: '',
+						decorative: false,
+						sourceFile,
+						uploadFile: result.file,
+						localPreview: URL.createObjectURL(result.file),
+						originalSize: result.originalSize,
+						uploadSize: result.uploadSize,
+						note: result.note,
+						useOriginal
+					});
+					renderMediaItems();
+				}
+				setMediaStatus(`已准备 ${mediaItems.length} 张图片。`);
+			} catch (error) {
+				setMediaStatus(error instanceof Error ? error.message : '图片处理失败', true);
+			} finally {
+				mediaBusy = false;
+				if (originalToggle instanceof HTMLInputElement) originalToggle.disabled = false;
+			}
+		};
+
+		const reprocessMediaFiles = async () => {
+			const tools = mediaTools;
+			if (!tools || mediaBusy) return;
+			const originalToggle = byId('editor-media-original');
+			const useOriginal = originalToggle instanceof HTMLInputElement && originalToggle.checked;
+			mediaBusy = true;
+			if (originalToggle instanceof HTMLInputElement) originalToggle.disabled = true;
+			try {
+				const updates = [];
+				for (const item of mediaItems) {
+					if (!item.sourceFile || item.useOriginal === useOriginal) continue;
+					setMediaStatus(`正在重新处理 ${item.sourceFile.name}…`);
+					const result = await tools.processEditorImage(item.sourceFile, useOriginal);
+					updates.push({ item, result });
+				}
+				for (const { item, result } of updates) {
+					if (item.localPreview) URL.revokeObjectURL(item.localPreview);
+					item.uploadFile = result.file;
+					item.localPreview = URL.createObjectURL(result.file);
+					item.uploadSize = result.uploadSize;
+					item.note = result.note;
+					item.useOriginal = useOriginal;
+				}
+				renderMediaItems();
+				setMediaStatus(useOriginal ? '将上传原始文件。' : '已恢复智能压缩。');
+			} catch (error) {
+				const currentMode = mediaItems.find((item) => item.sourceFile)?.useOriginal ?? false;
+				if (originalToggle instanceof HTMLInputElement) originalToggle.checked = currentMode;
+				setMediaStatus(error instanceof Error ? error.message : '图片处理失败', true);
+			} finally {
+				mediaBusy = false;
+				if (originalToggle instanceof HTMLInputElement) originalToggle.disabled = false;
+			}
+		};
+
+		const resetMediaComposer = () => {
+			releaseMediaPreviews();
+			mediaItems = [];
+			mediaReplaceRange = null;
+			setMediaValue('editor-media-columns', 'auto');
+			setMediaValue('editor-media-ratio', 'original');
+			setMediaValue('editor-media-fit', 'contain');
+			setMediaValue('editor-media-width', 'normal');
+			setMediaValue('editor-media-caption', '');
+			const original = byId('editor-media-original');
+			if (original instanceof HTMLInputElement) original.checked = false;
+			const urlInput = byId('editor-media-url');
+			if (urlInput instanceof HTMLInputElement) urlInput.value = '';
+			renderMediaItems();
+			setMediaStatus('');
+		};
+
+		const openMediaComposer = () => {
+			if (!(bodyInput instanceof HTMLTextAreaElement) || !(mediaDialog instanceof HTMLDialogElement)) return;
+			resetMediaComposer();
+			const tools = mediaTools;
+			const match = tools?.findEditorMediaBlock(bodyInput.value, bodyInput.selectionStart, bodyInput.selectionEnd);
+			if (match) {
+				mediaReplaceRange = { start: match.start, end: match.end };
+				mediaItems = match.block.images.map((image) => ({ ...image, decorative: !image.alt }));
+				setMediaValue('editor-media-columns', match.block.columns);
+				setMediaValue('editor-media-ratio', match.block.ratio);
+				setMediaValue('editor-media-fit', match.block.fit);
+				setMediaValue('editor-media-width', match.block.width);
+				setMediaValue('editor-media-caption', match.block.caption);
+				const title = byId('editor-media-title');
+				if (title instanceof HTMLElement) title.textContent = '编辑图片块';
+				if (mediaInsertButton instanceof HTMLButtonElement) mediaInsertButton.textContent = '更新图片块';
+			} else {
+				mediaReplaceRange = { start: bodyInput.selectionEnd, end: bodyInput.selectionEnd };
+				const title = byId('editor-media-title');
+				if (title instanceof HTMLElement) title.textContent = '插入图片';
+				if (mediaInsertButton instanceof HTMLButtonElement) mediaInsertButton.textContent = '上传并插入';
+			}
+			renderMediaItems();
+			mediaDialog.showModal();
+		};
+
+		const closeMediaComposer = () => {
+			if (mediaBusy) return;
+			if (mediaDialog instanceof HTMLDialogElement) mediaDialog.close();
+			releaseMediaPreviews();
+			mediaItems = [];
+		};
+
+		const uploadWithProgress = (url, headers, file, onProgress) =>
+			new Promise((resolve, reject) => {
+				const request = new XMLHttpRequest();
+				request.open('PUT', url);
+				Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value));
+				request.upload.addEventListener('progress', (event) => {
+					if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+				});
+				request.addEventListener('load', () => {
+					if (request.status >= 200 && request.status < 300) resolve();
+					else reject(new Error(`R2 返回 ${request.status}`));
+				});
+				request.addEventListener('error', () => reject(new Error('网络或 R2 CORS 阻止了上传。')));
+				request.addEventListener('abort', () => reject(new Error('图片上传已取消。')));
+				request.send(file);
+			});
+
+		const uploadMediaItem = async (item, index, total) => {
+			if (!item.uploadFile) return item.src;
+			setMediaStatus(`正在上传第 ${index + 1}/${total} 张图片…`);
+			const preparedResponse = await fetch('/api/editor/media/prepare.json', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ filename: item.uploadFile.name, contentType: item.uploadFile.type, size: item.uploadFile.size })
+			});
+			const prepared = await preparedResponse.json();
+			if (!preparedResponse.ok) throw new Error(prepared.error || '无法准备图片上传');
+			await uploadWithProgress(prepared.uploadUrl, prepared.uploadHeaders, item.uploadFile, (progress) => {
+				setMediaStatus(`正在上传第 ${index + 1}/${total} 张图片 · ${progress}%`);
+			});
+			return prepared.url;
+		};
+
+		const insertMediaBlock = async () => {
+			if (mediaBusy || !(bodyInput instanceof HTMLTextAreaElement) || !mediaReplaceRange) return;
+			if (mediaItems.length === 0) {
+				setMediaStatus('请先添加至少一张图片。', true);
+				return;
+			}
+			const missingAlt = mediaItems.find((item) => !item.decorative && !item.alt.trim());
+			if (missingAlt) {
+				setMediaStatus('请为每张非装饰图片填写 Alt 文本。', true);
+				return;
+			}
+			const tools = mediaTools;
+			if (!tools) return;
+			mediaBusy = true;
+			if (mediaInsertButton instanceof HTMLButtonElement) mediaInsertButton.disabled = true;
+			const originalToggle = byId('editor-media-original');
+			if (originalToggle instanceof HTMLInputElement) originalToggle.disabled = true;
+			try {
+				const images = [];
+				for (let index = 0; index < mediaItems.length; index += 1) {
+					const item = mediaItems[index];
+					const src = await uploadMediaItem(item, index, mediaItems.length);
+					item.src = src;
+					item.uploadFile = null;
+					images.push({
+						src,
+						alt: item.decorative ? '' : item.alt.trim(),
+						caption: item.caption.trim()
+					});
+				}
+				const block = {
+					kind: images.length === 1 ? 'image' : 'gallery',
+					images,
+					columns: getMediaSelectValue('editor-media-columns', 'auto'),
+					ratio: getMediaSelectValue('editor-media-ratio', 'original'),
+					fit: getMediaSelectValue('editor-media-fit', 'contain'),
+					width: getMediaSelectValue('editor-media-width', images.length === 1 ? 'normal' : 'wide'),
+					caption: getInput('editor-media-caption')?.value.trim() || ''
+				};
+				const directive = tools.serializeEditorMediaBlock(block);
+				const isReplacing = mediaReplaceRange.end > mediaReplaceRange.start;
+				const inserted = isReplacing ? directive : `\n\n${directive}\n\n`;
+				bodyInput.setRangeText(inserted, mediaReplaceRange.start, mediaReplaceRange.end, 'end');
+				hasUnpublishedChanges = true;
+				scheduleDraft();
+				setStatus(`${isReplacing ? '已更新' : '已插入'}${images.length === 1 ? '图片' : `${images.length} 张图库`}，尚未发布`);
+				mediaBusy = false;
+				closeMediaComposer();
+				bodyInput.focus();
+			} catch (error) {
+				setMediaStatus(error instanceof Error ? error.message : '图片上传失败', true);
+			} finally {
+				mediaBusy = false;
+				if (mediaInsertButton instanceof HTMLButtonElement) mediaInsertButton.disabled = false;
+				if (originalToggle instanceof HTMLInputElement) originalToggle.disabled = false;
+			}
 		};
 
 		const publish = async () => {
@@ -662,6 +1142,62 @@ const canPublish = isGitHubPublishingConfigured();
 				scheduleDraft();
 			})
 		);
+
+		byId('editor-media-open')?.addEventListener('click', openMediaComposer);
+		byId('editor-media-close')?.addEventListener('click', closeMediaComposer);
+		byId('editor-media-cancel')?.addEventListener('click', closeMediaComposer);
+		mediaDialog?.addEventListener('cancel', (event) => {
+			if (mediaBusy) event.preventDefault();
+			else closeMediaComposer();
+		});
+		mediaInsertButton?.addEventListener('click', insertMediaBlock);
+		const mediaDropzone = byId('editor-media-dropzone');
+		mediaDropzone?.addEventListener('click', () => {
+			if (mediaFileInput instanceof HTMLInputElement) mediaFileInput.click();
+		});
+		mediaDropzone?.addEventListener('keydown', (event) => {
+			if (event.key !== 'Enter' && event.key !== ' ') return;
+			event.preventDefault();
+			if (mediaFileInput instanceof HTMLInputElement) mediaFileInput.click();
+		});
+		mediaDropzone?.addEventListener('dragover', (event) => {
+			event.preventDefault();
+			mediaDropzone.classList.add('border-zinc-600');
+		});
+		mediaDropzone?.addEventListener('dragleave', () => mediaDropzone.classList.remove('border-zinc-600'));
+		mediaDropzone?.addEventListener('drop', (event) => {
+			event.preventDefault();
+			mediaDropzone.classList.remove('border-zinc-600');
+			if (event.dataTransfer?.files.length) addMediaFiles([...event.dataTransfer.files]);
+		});
+		mediaFileInput?.addEventListener('change', () => {
+			if (mediaFileInput instanceof HTMLInputElement && mediaFileInput.files?.length) {
+				addMediaFiles([...mediaFileInput.files]);
+				mediaFileInput.value = '';
+			}
+		});
+		byId('editor-media-original')?.addEventListener('change', reprocessMediaFiles);
+		byId('editor-media-ratio')?.addEventListener('change', () => {
+			setMediaValue('editor-media-fit', getMediaSelectValue('editor-media-ratio', 'original') === 'original' ? 'contain' : 'cover');
+		});
+		byId('editor-media-add-url')?.addEventListener('click', () => {
+			const input = byId('editor-media-url');
+			if (!(input instanceof HTMLInputElement)) return;
+			try {
+				if (mediaItems.length >= 12) throw new Error('limit');
+				const url = new URL(input.value.trim());
+				if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
+				mediaItems.push({ src: url.toString(), alt: '', caption: '', decorative: false });
+				input.value = '';
+				renderMediaItems();
+				setMediaStatus('已添加图片 URL。');
+			} catch (error) {
+				setMediaStatus(
+					error instanceof Error && error.message === 'limit' ? '一个图片块最多支持 12 张图片。' : '请输入有效的 http(s) 图片 URL。',
+					true
+				);
+			}
+		});
 
 		byId('editor-logout')?.addEventListener('click', async () => {
 			await fetch('/api/editor/logout.json', { method: 'POST' });

@@ -17,6 +17,16 @@ export interface EditorDocument {
 	body: string;
 }
 
+export interface EditorDocumentSummary {
+	type: EditorContentType;
+	path: string;
+	sha: string;
+	slug: string;
+	title: string;
+	description: string;
+	pubDate: string;
+}
+
 export interface EditorPublishInput extends Omit<EditorDocument, 'path' | 'sha'> {
 	path?: string;
 	sha?: string;
@@ -116,6 +126,16 @@ export const parseEditorDocument = (source: string, path: string, sha: string): 
 		body: frontmatter.body
 	};
 };
+
+export const toEditorDocumentSummary = (document: EditorDocument): EditorDocumentSummary => ({
+	type: document.type,
+	path: document.path,
+	sha: document.sha,
+	slug: document.slug,
+	title: document.title,
+	description: document.description,
+	pubDate: document.pubDate
+});
 
 const isValidDate = (value: string) => {
 	if (!DATE_PATTERN.test(value)) return false;

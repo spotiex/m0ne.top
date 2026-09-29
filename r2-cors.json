@@ -1,0 +1,12 @@
+{
+	"rules": [
+		{
+			"allowed": {
+				"origins": ["https://m0ne.top", "https://imageport.app", "http://localhost:4321", "http://127.0.0.1:4321", "http://localhost:8888"],
+				"methods": ["GET", "PUT", "DELETE", "HEAD", "POST"],
+				"headers": ["*"]
+			},
+			"maxAgeSeconds": 3600
+		}
+	]
+}
