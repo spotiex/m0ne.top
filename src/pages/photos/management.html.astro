@@ -746,14 +746,15 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 						},
 						body: JSON.stringify({
 							filename: file.name,
-							contentType: file.type
+							contentType: file.type,
+							size: file.size
 						})
 					});
 					const result = await response.json();
 
 					if (requestId !== prepareRequestId) return;
 
-					if (!response.ok || !result?.url || !result?.key) {
+					if (!response.ok || !result?.url || !result?.key || !result?.uploadUrl || !result?.uploadHeaders) {
 						throw new Error(result?.error || '生成 URL 失败。');
 					}
 
@@ -775,6 +776,23 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 				syncDuplicateHint();
 				return preparedUploadTarget;
 			};
+
+			const uploadWithProgress = (url, headers, file, onProgress) =>
+				new Promise((resolve, reject) => {
+					const request = new XMLHttpRequest();
+					request.open('PUT', url);
+					Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value));
+					request.upload.addEventListener('progress', (event) => {
+						if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+					});
+					request.addEventListener('load', () => {
+						if (request.status >= 200 && request.status < 300) resolve();
+						else reject(new Error(`R2 返回 ${request.status}`));
+					});
+					request.addEventListener('error', () => reject(new Error('网络或 R2 CORS 阻止了上传。')));
+					request.addEventListener('abort', () => reject(new Error('图片上传已取消。')));
+					request.send(file);
+				});
 
 			[srcInput, altInput, titleInput, dateInput, descriptionInput, tagsInput].forEach((node) => {
 				node?.addEventListener('input', () => {
@@ -922,21 +940,17 @@ const currentPhotoDate = getCurrentPhotoDate(photoTimeZone);
 							body: JSON.stringify(payload)
 						});
 					} else {
-						const formData = new FormData();
-						formData.set('image', selectedFile);
-						formData.set('uploadKey', uploadTarget.key);
-						formData.set('src', uploadTarget.url);
-						formData.set('originalSrc', payload.originalSrc);
-						formData.set('alt', payload.alt);
-						formData.set('title', payload.title);
-						formData.set('date', payload.date);
-						formData.set('description', payload.description);
-						formData.set('tags', tagsInput.value.trim());
-
-						statusNode.textContent = '上传图片并写入 gallery JSON...';
+						statusNode.textContent = '正在上传图片...';
+						await uploadWithProgress(uploadTarget.uploadUrl, uploadTarget.uploadHeaders, selectedFile, (progress) => {
+							statusNode.textContent = `正在上传图片 · ${progress}%`;
+						});
+						statusNode.textContent = '正在写入 gallery JSON...';
 						response = await fetch('/api/photos/add.json', {
 							method: 'POST',
-							body: formData
+							headers: {
+								'content-type': 'application/json'
+							},
+							body: JSON.stringify(payload)
 						});
 					}
 

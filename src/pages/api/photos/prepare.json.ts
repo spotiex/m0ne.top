@@ -1,8 +1,10 @@
 import type { APIRoute } from 'astro';
 import { isPhotoAdminAuthenticated } from '../../../lib/server/photoAdminAuth';
-import { getImageUploadTarget } from '../../../lib/server/r2';
+import { createBrowserUploadTarget } from '../../../lib/server/r2';
 
 export const prerender = false;
+
+const MAX_UPLOAD_BYTES = 30 * 1024 * 1024;
 
 const json = (body: unknown, status = 200) =>
 	new Response(JSON.stringify(body), {
@@ -21,6 +23,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
 	let payload: {
 		filename?: string;
 		contentType?: string;
+		size?: number;
 	};
 
 	try {
@@ -31,6 +34,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
 
 	const filename = String(payload.filename ?? '').trim();
 	const contentType = String(payload.contentType ?? '').trim();
+	const size = Number(payload.size ?? 0);
 
 	if (!filename) {
 		return json({ error: 'filename is required.' }, 400);
@@ -40,8 +44,12 @@ export const POST: APIRoute = async ({ cookies, request }) => {
 		return json({ error: 'Only image files can be uploaded.' }, 400);
 	}
 
+	if (!Number.isSafeInteger(size) || size <= 0 || size > MAX_UPLOAD_BYTES) {
+		return json({ error: 'Image size must be between 1 byte and 30 MB.' }, 400);
+	}
+
 	try {
-		const target = getImageUploadTarget({
+		const target = createBrowserUploadTarget({
 			name: filename,
 			type: contentType
 		});
